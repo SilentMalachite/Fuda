@@ -1,0 +1,32 @@
+// Phase 0 確認用のデザインシステムトークン（SPEC §7.1 / §7.2「やさしい」配色）
+export global Theme {
+    // 配色（やさしい）
+    out property <color> bg: #F3F1EC;
+    out property <color> surface: #FBFAF7;
+    out property <color> text: #2E2E2B;
+    out property <color> text-muted: #5E5D58;
+    out property <color> border: #D9D5CC;
+    out property <color> accent: #2F6F6A;
+    out property <color> on-accent: #FFFFFF;
+    out property <color> focus: #2B5FA6;
+    out property <color> select: #DCE9E6;
+
+    // 文字サイズ（基準 16 / 18 / 22 / 26px を切替）
+    in-out property <length> font-base: 16px;
+    out property <length> font-heading: root.font-base * 1.5;
+    out property <length> font-small: max(14px, root.font-base * 0.875);
+    // BIZ UDPゴシックの natural line height は 1.0000em のため 1.6 で厳密に 1.6em になる
+    out property <float> line-height: 1.6;
+
+    // 余白・角丸・最小押下サイズ（font-base に連動してスケール）
+    out property <float> scale: root.font-base / 16px;
+    out property <length> space-1: 4px * root.scale;
+    out property <length> space-2: 8px * root.scale;
+    out property <length> space-3: 12px * root.scale;
+    out property <length> space-4: 16px * root.scale;
+    out property <length> space-6: 24px * root.scale;
+    out property <length> space-8: 32px * root.scale;
+    out property <length> radius: 8px;
+    out property <length> touch-min: 44px;
+    out property <length> time-range-width: root.font-base * 8.75;
+}

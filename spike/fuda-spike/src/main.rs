@@ -332,4 +332,50 @@ mod tests {
         assert!(state.added_cards_text().is_empty());
         assert!(state.event_log_text().is_empty());
     }
+
+    fn ttf_table_offset(bytes: &[u8], tag: &[u8; 4]) -> usize {
+        let num_tables = usize::from(u16::from_be_bytes([bytes[4], bytes[5]]));
+        for i in 0..num_tables {
+            let rec = 12 + i * 16;
+            if &bytes[rec..rec + 4] == tag {
+                return u32::from_be_bytes([
+                    bytes[rec + 8],
+                    bytes[rec + 9],
+                    bytes[rec + 10],
+                    bytes[rec + 11],
+                ]) as usize;
+            }
+        }
+        panic!(
+            "TTF テーブルが見つかりません: {}",
+            String::from_utf8_lossy(tag)
+        );
+    }
+
+    #[test]
+    fn bundled_biz_udp_gothic_vertical_metrics_are_1em() {
+        let fonts_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fonts");
+
+        for font_file in ["BIZUDPGothic-Regular.ttf", "BIZUDPGothic-Bold.ttf"] {
+            let path = fonts_dir.join(font_file);
+            let bytes = std::fs::read(&path)
+                .unwrap_or_else(|e| panic!("フォント読込失敗 ({}): {e}", path.display()));
+
+            let head = ttf_table_offset(&bytes, b"head");
+            let units_per_em = u16::from_be_bytes([bytes[head + 18], bytes[head + 19]]);
+
+            let hhea = ttf_table_offset(&bytes, b"hhea");
+            let ascender = i16::from_be_bytes([bytes[hhea + 4], bytes[hhea + 5]]);
+            let descender = i16::from_be_bytes([bytes[hhea + 6], bytes[hhea + 7]]);
+            let line_gap = i16::from_be_bytes([bytes[hhea + 8], bytes[hhea + 9]]);
+
+            let natural_line_height =
+                i32::from(ascender) - i32::from(descender) + i32::from(line_gap);
+            assert_eq!(
+                natural_line_height,
+                i32::from(units_per_em),
+                "{font_file} の natural line height が 1.0em ではありません"
+            );
+        }
+    }
 }

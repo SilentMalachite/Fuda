@@ -1,0 +1,328 @@
+// Phase 0-4 確認ビュー: Theme.font-base 切替（16 → 26px）と line-height-factor による行間確認
+import { ScrollView } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+
+// 文字サイズ選択ボタン（最小高さ 44px、3px フォーカス枠、色だけに頼らない選択表示）
+component SizeChoiceButton inherits FocusScope {
+    in property <string> label;
+    in property <bool> selected: false;
+    callback clicked();
+
+    horizontal-stretch: 1;
+    min-height: Theme.touch-min;
+    accessible-role: radio-button;
+    accessible-label: root.label;
+    accessible-checked: root.selected;
+    accessible-action-default => {
+        root.clicked();
+    }
+
+    key-pressed(event) => {
+        if (event.text == Key.Return || event.text == " ") {
+            root.clicked();
+            return EventResult.accept;
+        }
+        return EventResult.reject;
+    }
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: Theme.radius;
+        background: root.selected ? Theme.select : Theme.bg;
+        border-width: root.has-focus ? 3px : 1px;
+        border-color: root.has-focus ? Theme.focus : Theme.border;
+
+        HorizontalLayout {
+            padding-left: Theme.space-2;
+            padding-right: Theme.space-2;
+            padding-top: Theme.space-2;
+            padding-bottom: Theme.space-2;
+
+            Text {
+                text: root.label;
+                font-size: Theme.font-base;
+                font-weight: root.selected ? 700 : 400;
+                color: Theme.text;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        // 選択中の下線（太さ 3px、色だけに頼らない表示）
+        if root.selected: Rectangle {
+            x: Theme.space-2;
+            y: parent.height - 4px;
+            width: parent.width - Theme.space-2 * 2;
+            height: 3px;
+            background: Theme.accent;
+        }
+
+        TouchArea {
+            clicked => {
+                root.focus();
+                root.clicked();
+            }
+        }
+    }
+}
+
+// 追従確認用のカード見本
+component PreviewCard inherits Rectangle {
+    in property <string> time-text;
+    in property <string> title-text;
+    in property <string> detail-text;
+
+    background: Theme.bg;
+    border-width: 1px;
+    border-color: Theme.border;
+    border-radius: Theme.radius;
+
+    HorizontalLayout {
+        padding: Theme.space-3;
+        spacing: Theme.space-3;
+
+        // 固定幅の時刻欄（Theme.font-base に比例）
+        Rectangle {
+            width: Theme.time-range-width;
+            horizontal-stretch: 0;
+
+            Text {
+                width: 100%;
+                text: root.time-text;
+                font-size: Theme.font-base;
+                color: Theme.text;
+                horizontal-alignment: left;
+                vertical-alignment: top;
+            }
+
+            Rectangle {
+                x: parent.width - 1px;
+                width: 1px;
+                height: 100%;
+                background: Theme.border;
+            }
+        }
+
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: Theme.space-1;
+
+            Text {
+                text: root.title-text;
+                font-size: Theme.font-base;
+                font-weight: 700;
+                color: Theme.text;
+                wrap: word-wrap;
+                line-height-factor: Theme.line-height;
+            }
+
+            Text {
+                text: root.detail-text;
+                font-size: Theme.font-small;
+                color: Theme.text-muted;
+                wrap: word-wrap;
+                line-height-factor: Theme.line-height;
+            }
+        }
+    }
+}
+
+// 行間比較用の列ボックス
+component LineHeightColumn inherits Rectangle {
+    in property <string> heading;
+    in property <float> factor;
+    in property <string> body-text;
+    in property <bool> emphasized: false;
+
+    horizontal-stretch: 1;
+    background: Theme.bg;
+    border-width: root.emphasized ? 2px : 1px;
+    border-color: root.emphasized ? Theme.accent : Theme.border;
+    border-radius: Theme.radius;
+
+    VerticalLayout {
+        padding: Theme.space-3;
+        spacing: Theme.space-2;
+
+        Text {
+            text: root.heading;
+            font-size: Theme.font-small;
+            font-weight: 700;
+            color: root.emphasized ? Theme.accent : Theme.text-muted;
+            wrap: word-wrap;
+        }
+
+        Text {
+            text: root.body-text;
+            font-size: Theme.font-base;
+            color: Theme.text;
+            wrap: word-wrap;
+            line-height-factor: root.factor;
+        }
+    }
+}
+
+export component Phase04ThemeView inherits Rectangle {
+    background: Theme.bg;
+
+    ScrollView {
+        width: 100%;
+        height: 100%;
+
+        VerticalLayout {
+            padding: Theme.space-4;
+            spacing: Theme.space-4;
+
+            // 見出し
+            Text {
+                text: @tr("Phase 0-4: Theme.font-base 切替（16 → 26px）と行間確認");
+                font-size: Theme.font-heading;
+                font-weight: 700;
+                color: Theme.accent;
+                wrap: word-wrap;
+            }
+
+            // 1. 文字の大きさ 4段階切替
+            Rectangle {
+                background: Theme.surface;
+                border-width: 1px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
+
+                VerticalLayout {
+                    padding: Theme.space-3;
+                    spacing: Theme.space-3;
+
+                    Text {
+                        text: @tr("1. 文字の大きさ 4 段階切替（SPEC §5.12 / §7.1）");
+                        font-size: Theme.font-base;
+                        font-weight: 700;
+                        color: Theme.text;
+                        wrap: word-wrap;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.space-2;
+
+                        SizeChoiceButton {
+                            label: @tr("標準（16px）");
+                            selected: Theme.font-base == 16px;
+                            clicked => {
+                                Theme.font-base = 16px;
+                            }
+                        }
+
+                        SizeChoiceButton {
+                            label: @tr("大（18px）");
+                            selected: Theme.font-base == 18px;
+                            clicked => {
+                                Theme.font-base = 18px;
+                            }
+                        }
+
+                        SizeChoiceButton {
+                            label: @tr("特大（22px）");
+                            selected: Theme.font-base == 22px;
+                            clicked => {
+                                Theme.font-base = 22px;
+                            }
+                        }
+
+                        SizeChoiceButton {
+                            label: @tr("最大（26px）");
+                            selected: Theme.font-base == 26px;
+                            clicked => {
+                                Theme.font-base = 26px;
+                            }
+                        }
+                    }
+
+                    Text {
+                        text: @tr(
+                            "基準: {}px ／ 見出し(1.5倍): {}px ／ 小さい文字(下限14px): {}px ／ 余白(space-4): {}px",
+                            Math.round(Theme.font-base / 1px),
+                            Math.round(Theme.font-heading / 1px),
+                            Math.round(Theme.font-small / 1px),
+                            Math.round(Theme.space-4 / 1px)
+                        );
+                        font-size: Theme.font-small;
+                        color: Theme.text-muted;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+
+            // 2. 文字・余白・固定幅時刻欄の追従確認
+            Rectangle {
+                background: Theme.surface;
+                border-width: 1px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
+
+                VerticalLayout {
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
+
+                    Text {
+                        text: @tr("2. 文字・余白・固定幅時刻欄の追従確認（カード見本）");
+                        font-size: Theme.font-base;
+                        font-weight: 700;
+                        color: Theme.text;
+                        wrap: word-wrap;
+                    }
+
+                    PreviewCard {
+                        time-text: @tr("10:00〜11:00");
+                        title-text: @tr("歯医者・○○歯科");
+                        detail-text: @tr("知らせ 30分前 ／ 毎週 火・木（次は 11月24日（火））");
+                    }
+
+                    PreviewCard {
+                        time-text: @tr("23:59〜23:59");
+                        title-text: @tr("長いタイトルが折り返されたときに重ならないか確認するカード");
+                        detail-text: @tr("余白も Theme.space-* に連動して広がります");
+                    }
+                }
+            }
+
+            // 3. 行間（line-height-factor）の左右比較
+            Rectangle {
+                background: Theme.surface;
+                border-width: 1px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
+
+                VerticalLayout {
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
+
+                    Text {
+                        text: @tr("3. 行間（line-height-factor）の左右比較");
+                        font-size: Theme.font-base;
+                        font-weight: 700;
+                        color: Theme.text;
+                        wrap: word-wrap;
+                    }
+
+                    HorizontalLayout {
+                        spacing: Theme.space-3;
+
+                        LineHeightColumn {
+                            heading: @tr("既定（line-height-factor: 1.0）");
+                            factor: 1.0;
+                            body-text: @tr("明日の午前10時から歯医者の予定があります。\n保険証と診察券とメモを忘れずに持って行きます。\n帰りに駅前で買い物をしてから家に戻ります。場所や時刻が変わったときも、この行間なら落ち着いて読み返せます。");
+                        }
+
+                        LineHeightColumn {
+                            heading: @tr("広め（line-height-factor: 1.6）");
+                            factor: Theme.line-height;
+                            emphasized: true;
+                            body-text: @tr("明日の午前10時から歯医者の予定があります。\n保険証と診察券とメモを忘れずに持って行きます。\n帰りに駅前で買い物をしてから家に戻ります。場所や時刻が変わったときも、この行間なら落ち着いて読み返せます。");
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

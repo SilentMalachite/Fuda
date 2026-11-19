@@ -1,6 +1,6 @@
 // Phase 0-2 確認ビュー: BIZ UDPゴシックの表示、記号、時刻数字の桁揃え比較
 import { ScrollView } from "std-widgets.slint";
-import { SpikePalette } from "palette.slint";
+import { Theme } from "theme.slint";
 
 // そのまま時刻とタイトルを連結した比較用の行
 component PlainTimeRow inherits Rectangle {
@@ -8,20 +8,20 @@ component PlainTimeRow inherits Rectangle {
 
     min-height: 28px;
     border-width: 1px;
-    border-color: SpikePalette.border;
+    border-color: Theme.border;
     border-radius: 4px;
-    background: SpikePalette.bg;
+    background: Theme.bg;
 
     HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        padding-top: 4px;
-        padding-bottom: 4px;
+        padding-left: Theme.space-2;
+        padding-right: Theme.space-2;
+        padding-top: Theme.space-1;
+        padding-bottom: Theme.space-1;
 
         Text {
             text: root.label;
-            font-size: 16px;
-            color: SpikePalette.text;
+            font-size: Theme.font-base;
+            color: Theme.text;
             vertical-alignment: center;
         }
     }
@@ -34,27 +34,27 @@ component FixedTimeRow inherits Rectangle {
 
     min-height: 28px;
     border-width: 1px;
-    border-color: SpikePalette.border;
+    border-color: Theme.border;
     border-radius: 4px;
-    background: SpikePalette.bg;
+    background: Theme.bg;
 
     HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-        spacing: 8px;
+        padding-left: Theme.space-2;
+        padding-right: Theme.space-2;
+        padding-top: Theme.space-1;
+        padding-bottom: Theme.space-1;
+        spacing: Theme.space-2;
 
-        // 23:59〜23:59 が 16px (Bold でも約 124px) で余裕を持って収まる固定幅（140px）
+        // font-base に連動した固定幅（16px 時 140px）で 23:59〜23:59 が余裕を持って収まる
         Rectangle {
-            width: 140px;
+            width: Theme.time-range-width;
             horizontal-stretch: 0;
 
             Text {
                 width: 100%;
                 text: root.time-text;
-                font-size: 16px;
-                color: SpikePalette.text;
+                font-size: Theme.font-base;
+                color: Theme.text;
                 horizontal-alignment: left;
                 vertical-alignment: center;
             }
@@ -64,126 +64,133 @@ component FixedTimeRow inherits Rectangle {
                 x: parent.width - 1px;
                 width: 1px;
                 height: 100%;
-                background: SpikePalette.border;
+                background: Theme.border;
             }
         }
 
         Text {
             text: root.title-text;
-            font-size: 16px;
-            color: SpikePalette.text;
+            font-size: Theme.font-base;
+            color: Theme.text;
             vertical-alignment: center;
             wrap: word-wrap;
         }
     }
 }
 
-// 4段階の文字サイズ見本行
+// 4段階の文字サイズ固定比較見本行（SPEC §7.1 の各基準値比較用）
 component FontSizeSampleRow inherits HorizontalLayout {
     in property <string> size-label;
     in property <length> sample-size;
     in property <string> sample-text;
 
-    spacing: 12px;
+    spacing: Theme.space-3;
 
     Text {
         width: 56px;
         text: root.size-label;
         font-size: 14px;
         font-weight: 700;
-        color: SpikePalette.text-muted;
+        color: Theme.text-muted;
         vertical-alignment: center;
     }
 
     Text {
         text: root.sample-text;
         font-size: root.sample-size;
-        color: SpikePalette.text;
+        color: Theme.text;
         vertical-alignment: center;
         wrap: word-wrap;
     }
 }
 
 export component Phase02FontView inherits Rectangle {
-    background: SpikePalette.bg;
+    background: Theme.bg;
 
     ScrollView {
         width: 100%;
         height: 100%;
 
         VerticalLayout {
-            padding: 16px;
-            spacing: 16px;
+            padding: Theme.space-4;
+            spacing: Theme.space-4;
 
             // ヘッダー
             VerticalLayout {
-                spacing: 4px;
+                spacing: Theme.space-1;
 
                 Text {
                     text: @tr("Phase 0-2: BIZ UDPゴシックと時刻数字の桁揃え確認");
-                    font-size: 20px;
+                    font-size: Theme.font-heading;
                     font-weight: 700;
-                    color: SpikePalette.accent;
+                    color: Theme.accent;
+                    wrap: word-wrap;
                 }
 
                 Text {
                     text: @tr("BIZUDPGothic-Regular (400) / Bold (700) を同梱し、日本語・記号・数字幅の差異を検証します。");
-                    font-size: 14px;
-                    color: SpikePalette.text-muted;
+                    font-size: Theme.font-small;
+                    color: Theme.text-muted;
                     wrap: word-wrap;
                 }
             }
 
             // 1. 日本語と記号の表示（Regular 400 / Bold 700 比較）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
 
                     Text {
                         text: @tr("1. 日本語・半角カナ・記号の表示（Regular 400 / Bold 700）");
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
+                        wrap: word-wrap;
                     }
 
                     Text {
                         text: @tr("[Regular 400] あいうえお ぁぃぅぇぉ っゃゅょ ／ アイウエオ ｶﾀｶﾅ ／ 予定・やること・知らせ・歯医者・勤労感謝の日");
+                        font-size: Theme.font-base;
                         font-weight: 400;
-                        color: SpikePalette.text;
+                        color: Theme.text;
                         wrap: word-wrap;
                     }
 
                     Text {
                         text: @tr("[Bold 700] あいうえお ぁぃぅぇぉ っゃゅょ ／ アイウエオ ｶﾀｶﾅ ／ 予定・やること・知らせ・歯医者・勤労感謝の日");
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
                         wrap: word-wrap;
                     }
 
                     Text {
                         text: @tr("[記号 Regular] 波ダッシュ(U+301C): 10:00〜11:00 ／ 全角チルダ(U+FF5E): 10:00～11:00 ／ 中黒: やること・予定・メモ ／ 米印: ※この回だけ休み");
+                        font-size: Theme.font-base;
                         font-weight: 400;
-                        color: SpikePalette.text;
+                        color: Theme.text;
                         wrap: word-wrap;
                     }
 
                     Text {
                         text: @tr("[記号 Bold] 波ダッシュ(U+301C): 10:00〜11:00 ／ 全角チルダ(U+FF5E): 10:00～11:00 ／ 中黒: やること・予定・メモ ／ 米印: ※この回だけ休み");
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
                         wrap: word-wrap;
                     }
 
                     Text {
                         text: @tr("[紛らわしい字] 0O 1Il 濁点・半濁点 ばぱ びぴ ぶぷ べぺ ぼぽ");
+                        font-size: Theme.font-base;
                         font-weight: 400;
-                        color: SpikePalette.text-muted;
+                        color: Theme.text-muted;
                         wrap: word-wrap;
                     }
                 }
@@ -191,42 +198,44 @@ export component Phase02FontView inherits Rectangle {
 
             // 2. 時刻の数字の桁揃え確認（左右 2 列比較）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 10px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
 
                     Text {
                         text: @tr("2. 時刻の数字の桁揃え確認（左右比較）");
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
+                        wrap: word-wrap;
                     }
 
                     Text {
-                        text: @tr("BIZ UDPゴシックは数字「1」のみ幅が狭く（1290 vs 1556/2048）、tnum も無いため、左列ではズレます。右列のように時刻欄の幅を固定（140px）すると揃います。");
-                        font-size: 14px;
-                        color: SpikePalette.text-muted;
+                        text: @tr("BIZ UDPゴシックは数字「1」のみ幅が狭く（1290 vs 1556/2048）、tnum も無いため、左列ではズレます。右列のように時刻欄の幅を固定すると揃います。");
+                        font-size: Theme.font-small;
+                        color: Theme.text-muted;
                         wrap: word-wrap;
                     }
 
                     HorizontalLayout {
-                        spacing: 16px;
+                        spacing: Theme.space-4;
 
                         // 左列: そのまま並べた場合
                         VerticalLayout {
                             horizontal-stretch: 1;
-                            spacing: 6px;
+                            spacing: Theme.space-2;
 
                             Text {
                                 text: @tr("そのまま並べた場合（時刻＋予定名を連結）");
-                                font-size: 14px;
+                                font-size: Theme.font-small;
                                 font-weight: 700;
-                                color: SpikePalette.text-muted;
+                                color: Theme.text-muted;
+                                wrap: word-wrap;
                             }
 
                             PlainTimeRow { label: @tr("00:00 予定A"); }
@@ -240,13 +249,14 @@ export component Phase02FontView inherits Rectangle {
                         // 右列: 回避策（固定幅）
                         VerticalLayout {
                             horizontal-stretch: 1;
-                            spacing: 6px;
+                            spacing: Theme.space-2;
 
                             Text {
                                 text: @tr("回避策: 時刻欄を固定幅にした場合（SPEC §7.4）");
-                                font-size: 14px;
+                                font-size: Theme.font-small;
                                 font-weight: 700;
-                                color: SpikePalette.accent;
+                                color: Theme.accent;
+                                wrap: word-wrap;
                             }
 
                             FixedTimeRow { time-text: @tr("00:00"); title-text: @tr("予定A"); }
@@ -262,20 +272,21 @@ export component Phase02FontView inherits Rectangle {
 
             // 3. 4段階の文字サイズ見本（SPEC §7.1: 16 / 18 / 22 / 26px）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
 
                     Text {
                         text: @tr("3. 文字の大きさ 4 段階見本（SPEC §7.1: 16 / 18 / 22 / 26px）");
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
+                        wrap: word-wrap;
                     }
 
                     FontSizeSampleRow {

@@ -1,13 +1,13 @@
 // Phase 0-3 確認ビュー: LineEdit と TextEdit の日本語入力（IME・変換確定 Enter・複数行改行）確認
 import { LineEdit, TextEdit, ScrollView } from "std-widgets.slint";
-import { SpikePalette } from "palette.slint";
+import { Theme } from "theme.slint";
 
 // キーボード操作とクリックの両方に対応し、3px フォーカス枠を持つアクションボタン
 component ActionButton inherits FocusScope {
     in property <string> label;
     callback clicked();
 
-    min-height: 44px;
+    min-height: Theme.touch-min;
     min-width: 140px;
     accessible-role: button;
     accessible-label: root.label;
@@ -26,22 +26,22 @@ component ActionButton inherits FocusScope {
     Rectangle {
         width: 100%;
         height: 100%;
-        border-radius: 8px;
-        background: touch.pressed ? SpikePalette.select : SpikePalette.surface;
+        border-radius: Theme.radius;
+        background: touch.pressed ? Theme.select : Theme.surface;
         border-width: root.has-focus ? 3px : 1px;
-        border-color: root.has-focus ? SpikePalette.focus : SpikePalette.border;
+        border-color: root.has-focus ? Theme.focus : Theme.border;
 
         HorizontalLayout {
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-top: 8px;
-            padding-bottom: 8px;
+            padding-left: Theme.space-4;
+            padding-right: Theme.space-4;
+            padding-top: Theme.space-2;
+            padding-bottom: Theme.space-2;
 
             Text {
                 text: root.label;
-                font-size: 16px;
+                font-size: Theme.font-base;
                 font-weight: 700;
-                color: SpikePalette.text;
+                color: Theme.text;
                 horizontal-alignment: center;
                 vertical-alignment: center;
             }
@@ -73,56 +73,58 @@ export component Phase03ImeView inherits Rectangle {
     callback multi-key-pressed(string, bool);
     callback clear-all();
 
-    background: SpikePalette.bg;
+    background: Theme.bg;
 
     ScrollView {
         width: 100%;
         height: 100%;
 
         VerticalLayout {
-            padding: 16px;
-            spacing: 12px;
+            padding: Theme.space-4;
+            spacing: Theme.space-3;
 
             // ヘッダーと確認手順
             VerticalLayout {
-                spacing: 4px;
+                spacing: Theme.space-1;
 
                 Text {
                     text: @tr("Phase 0-3: LineEdit と TextEdit の日本語入力確認");
-                    font-size: 20px;
+                    font-size: Theme.font-heading;
                     font-weight: 700;
-                    color: SpikePalette.accent;
+                    color: Theme.accent;
+                    wrap: word-wrap;
                 }
 
                 Text {
                     text: @tr("1) 変換中の下線・候補が出るか  2) 変換確定の Enter で『accepted 回数』が増えないか  3) 複数行で改行・編集できるか");
-                    font-size: 14px;
-                    color: SpikePalette.text-muted;
+                    font-size: Theme.font-small;
+                    color: Theme.text-muted;
                     wrap: word-wrap;
                 }
             }
 
             // 1. LineEdit（1行入力・カード追加の想定）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 10px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-3;
 
                     Text {
                         text: @tr("1. LineEdit（1行入力・カード追加の想定）");
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
+                        wrap: word-wrap;
                     }
 
                     line_input := LineEdit {
-                        min-height: 44px;
-                        font-size: 16px;
+                        min-height: Theme.touch-min;
+                        font-size: Theme.font-base;
                         text <=> root.line-text;
                         placeholder-text: @tr("思いついたことを書く（変換確定 Enter と追加 Enter を試す）");
                         accepted(text) => {
@@ -149,24 +151,24 @@ export component Phase03ImeView inherits Rectangle {
                     }
 
                     HorizontalLayout {
-                        spacing: 16px;
+                        spacing: Theme.space-4;
                         alignment: space-between;
 
                         HorizontalLayout {
-                            spacing: 20px;
+                            spacing: Theme.space-4;
 
                             Text {
                                 text: @tr("accepted 回数: {}", root.accepted-count);
-                                font-size: 16px;
+                                font-size: Theme.font-base;
                                 font-weight: 700;
-                                color: SpikePalette.accent;
+                                color: Theme.accent;
                                 vertical-alignment: center;
                             }
 
                             Text {
                                 text: @tr("edited 回数: {}", root.line-edited-count);
-                                font-size: 16px;
-                                color: SpikePalette.text-muted;
+                                font-size: Theme.font-base;
+                                color: Theme.text-muted;
                                 vertical-alignment: center;
                             }
                         }
@@ -181,26 +183,26 @@ export component Phase03ImeView inherits Rectangle {
 
                     // 追加されたカード一覧表示枠
                     Rectangle {
-                        background: SpikePalette.bg;
+                        background: Theme.bg;
                         border-width: 1px;
-                        border-color: SpikePalette.border;
+                        border-color: Theme.border;
                         border-radius: 6px;
 
                         VerticalLayout {
-                            padding: 10px;
-                            spacing: 4px;
+                            padding: Theme.space-3;
+                            spacing: Theme.space-1;
 
                             Text {
                                 text: @tr("accepted で追加されたカード一覧:");
-                                font-size: 14px;
+                                font-size: Theme.font-small;
                                 font-weight: 700;
-                                color: SpikePalette.text-muted;
+                                color: Theme.text-muted;
                             }
 
                             Text {
                                 text: root.added-cards-text != "" ? root.added-cards-text : @tr("（まだ追加されていません）");
-                                font-size: 16px;
-                                color: root.added-cards-text != "" ? SpikePalette.text : SpikePalette.text-muted;
+                                font-size: Theme.font-base;
+                                color: root.added-cards-text != "" ? Theme.text : Theme.text-muted;
                                 wrap: word-wrap;
                             }
                         }
@@ -210,38 +212,38 @@ export component Phase03ImeView inherits Rectangle {
 
             // 2. TextEdit（複数行入力・本文の想定）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
 
                     HorizontalLayout {
                         alignment: space-between;
 
                         Text {
                             text: @tr("2. TextEdit（複数行入力・本文の想定）");
-                            font-size: 16px;
+                            font-size: Theme.font-base;
                             font-weight: 700;
-                            color: SpikePalette.text;
+                            color: Theme.text;
                             vertical-alignment: center;
                         }
 
                         Text {
                             text: @tr("行数: {} 行 ／ 文字数: {} 文字", root.multi-line-count, root.multi-char-count);
-                            font-size: 14px;
+                            font-size: Theme.font-small;
                             font-weight: 700;
-                            color: SpikePalette.accent;
+                            color: Theme.accent;
                             vertical-alignment: center;
                         }
                     }
 
                     TextEdit {
                         min-height: 130px;
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         wrap: word-wrap;
                         text <=> root.multi-text;
                         placeholder-text: @tr("複数行の本文を書く（日本語変換と Enter 改行を試す）");
@@ -269,36 +271,36 @@ export component Phase03ImeView inherits Rectangle {
 
             // 3. イベントログ（最新が上、最大 12 件）
             Rectangle {
-                background: SpikePalette.surface;
+                background: Theme.surface;
                 border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+                border-color: Theme.border;
+                border-radius: Theme.radius;
 
                 VerticalLayout {
-                    padding: 12px;
-                    spacing: 6px;
+                    padding: Theme.space-3;
+                    spacing: Theme.space-2;
 
                     Text {
                         text: @tr("3. イベントログ（最新が上・最大 12 件）");
-                        font-size: 16px;
+                        font-size: Theme.font-base;
                         font-weight: 700;
-                        color: SpikePalette.text;
+                        color: Theme.text;
                     }
 
                     Rectangle {
-                        background: SpikePalette.bg;
+                        background: Theme.bg;
                         border-width: 1px;
-                        border-color: SpikePalette.border;
+                        border-color: Theme.border;
                         border-radius: 6px;
                         min-height: 96px;
 
                         VerticalLayout {
-                            padding: 10px;
+                            padding: Theme.space-3;
 
                             Text {
                                 text: root.event-log-text != "" ? root.event-log-text : @tr("（キー入力や確定のイベントがここに時系列で出ます）");
-                                font-size: 14px;
-                                color: root.event-log-text != "" ? SpikePalette.text : SpikePalette.text-muted;
+                                font-size: Theme.font-small;
+                                color: root.event-log-text != "" ? Theme.text : Theme.text-muted;
                                 wrap: word-wrap;
                             }
                         }
