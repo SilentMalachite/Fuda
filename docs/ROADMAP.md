@@ -13,7 +13,8 @@
 ここでは「ちゃんと作る」より「できるかを確かめる」を優先する。コードは `spike/` に置き、あとで捨ててよい。
 
 ### 画面と入力
-- [x] 0-1 workspace を作り、`slint`（1.19 系）と `rusqlite`（`bundled`）で空のウィンドウを出す。macOS と Windows でビルドする。（macOS 確認済み、Windows ビルドは別途確認）
+- [x] 0-1a workspace を作り、`slint`（1.19 系）と `rusqlite`（`bundled`）で空のウィンドウを出す（macOS でビルド・テスト・プロセス起動を確認。画面描画の目視は手元確認待ち）。
+- [ ] 0-1b 同じ workspace を Windows でビルドし、空のウィンドウが出ることを確かめる。
 - [ ] 0-2 BIZ UDPゴシックを `import` して日本語（ひらがな・カタカナ・漢字・記号「〜・※」）を表示する。時刻の数字の桁がそろうか。（§7.4）
 - [ ] 0-3 `LineEdit` と `TextEdit` で日本語入力を確かめる（macOS と Windows）。
   - 変換中の文字が正しく出るか

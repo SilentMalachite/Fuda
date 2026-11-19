@@ -1,3 +1,5 @@
+# 現環境の既存ツールチェーン（stable-aarch64-apple-darwin / 1.100.0）を利用するため
+# 当面 channel = "stable" とする。CI・Windows 検証導入時に具体的な版（例: "1.100.0"）へ固定する。
 [toolchain]
 channel = "stable"
 components = ["rustfmt", "clippy"]

@@ -9,9 +9,9 @@ dev-mcp = ["slint/mcp"]
 dev-clock = []
 
 [dependencies]
-anyhow = "1.0.104"
-rusqlite = { version = "0.43.0", features = ["bundled"] }
-slint = "1.19"
+anyhow.workspace = true
+rusqlite.workspace = true
+slint.workspace = true
 
 [build-dependencies]
-slint-build = "1.19"
+slint-build.workspace = true
