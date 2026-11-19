@@ -7,20 +7,25 @@
 
 ## いまの状態（1行）
 
-仕様書 0.2（予定・知らせ・繰り返しを追加）を作った段階。コードはまだない。
+Phase 0-1（macOS）完了。workspace と `spike/fuda-spike` で Slint 1.19.0 + rusqlite 0.43.0（bundled / SQLite 3.54.1）の空ウィンドウ起動を確認。
 
 ## 次にやること（1つだけ）
 
-ROADMAP Phase 0-1: workspace を作り、`slint` と `rusqlite`（bundled）で空のウィンドウを出す。
+ROADMAP Phase 0-2: BIZ UDPゴシックを `import` して日本語（ひらがな・カタカナ・漢字・記号「〜・※」）を表示し、時刻の数字の桁がそろうか確認する。
 
 ## 最後にやったこと
 
-- SPEC を 0.2 に改訂: アプリ名 fuda、5つ目の場所「予定」とスケジュール帳の画面、知らせ（知らせの窓・パソコンの通知・トレイ）、予定の繰り返し、祝日。
-- ROADMAP を並べ替え（予定・知らせ・繰り返しを Phase 3〜5 に。Phase 5 で毎日使い始められる）。
-- CLAUDE.md に知らせの決まりを追加。
+- Git リポジトリ初期化（`main`）、`.gitignore`・`rust-toolchain.toml` 作成、`origin`（`https://github.com/SilentMalachite/Fuda.git`）設定。
+- ルート `Cargo.toml`（workspace）と `spike/fuda-spike`（Slint 1.19.0 / slint-build 1.19.0 / rusqlite 0.43.0 / anyhow 1.0.104）を作成し、`Cargo.lock` を生成。
+- macOS（rustc 1.100.0）で `cargo fmt`、`cargo clippy -- -D warnings`、`cargo test`（SQLite 3.54.1 確認）、`cargo run -p fuda-spike`（空ウィンドウ起動）を確認。
 
 ## 決まったこと（日付つき。新しいものを上に）
 
+- 2026-11-19 依存追加（`spike/fuda-spike`）: `slint` 1.19.0 / `slint-build` 1.19.0 — UI フレームワークと `.slint` ビルド（SPEC §11 に従いライセンス確認対象）。
+- 2026-11-19 依存追加（`spike/fuda-spike`）: `rusqlite` 0.43.0（`features = ["bundled"]`）— 同梱 SQLite（v3.54.1）の読み書き（MIT）。
+- 2026-11-19 依存追加（`spike/fuda-spike`）: `anyhow` 1.0.104 — アプリ・スパイク側のエラー処理（MIT OR Apache-2.0）。
+- 2026-11-19 `rust-toolchain.toml` は `channel = "stable"`（現環境 `rustc 1.100.0`、edition 2024）を指定し、`rustfmt`・`clippy` を同梱する。
+- 2026-11-19 Phase 0 の Windows 確認項目は macOS 先行で実装・検証し、Windows 固有の確認は別途 Windows 環境で行う。
 - 2026-11-19 知らせは「知らせの窓」（いつも手前・フォーカスを奪わない・消すまで残る）が主。パソコンの通知は補助。音は MVP では作らない（P2、既定オフ）。
 - 2026-11-19 知らせは fuda が動いているあいだだけ。ウィンドウを閉じてもトレイでうしろで動き続けるのを既定にする。閉じているあいだの知らせは、次に動いたとき 24時間ぶんまで出す。
 - 2026-11-19 予定は5つ目の場所。予定の画面（スケジュール帳）は1日・1週間・1か月。日付のある やること・ボード のカードも、その日に見せる（置き場所は変えない）。
