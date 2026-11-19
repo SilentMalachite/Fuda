@@ -68,4 +68,35 @@ mod tests {
         let fk_err = conn.execute("INSERT INTO child (id, parent_id) VALUES (11, 999)", []);
         assert!(fk_err.is_err(), "foreign_keys = ON なのに不正挿入が通った");
     }
+
+    #[test]
+    fn bundled_biz_udp_gothic_fonts_and_license_exist() {
+        let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        let fonts_dir = manifest_dir.join("fonts");
+
+        for font_file in ["BIZUDPGothic-Regular.ttf", "BIZUDPGothic-Bold.ttf"] {
+            let path = fonts_dir.join(font_file);
+            let bytes = std::fs::read(&path)
+                .unwrap_or_else(|e| panic!("フォントファイル読込失敗 ({}): {e}", path.display()));
+            assert!(
+                bytes.len() > 4,
+                "フォントファイルが空または小さすぎます: {}",
+                path.display()
+            );
+            assert_eq!(
+                &bytes[..4],
+                &[0x00, 0x01, 0x00, 0x00],
+                "TrueType マジックバイトが一致しません: {}",
+                path.display()
+            );
+        }
+
+        let ofl_path = fonts_dir.join("OFL.txt");
+        let ofl_text = std::fs::read_to_string(&ofl_path)
+            .unwrap_or_else(|e| panic!("OFL.txt 読込失敗 ({}): {e}", ofl_path.display()));
+        assert!(
+            ofl_text.contains("SIL OPEN FONT LICENSE Version 1.1"),
+            "OFL.txt に SIL OPEN FONT LICENSE Version 1.1 が含まれていません"
+        );
+    }
 }

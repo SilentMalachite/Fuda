@@ -7,20 +7,21 @@
 
 ## いまの状態（1行）
 
-Phase 0-1a（macOS ビルド・テスト・プロセス起動）完了。手元での画面描画目視と Phase 0-1b（Windows ビルド）は未確認。
+Phase 0-2 完了（macOS 目視確認済み）。次は Phase 0-3（LineEdit と TextEdit の日本語入力確認）。
 
 ## 次にやること（1つだけ）
 
-手元で `cargo run -p fuda-spike` の空ウィンドウ描画を目視確認したうえで、ROADMAP Phase 0-2（BIZ UDPゴシックの `import` と日本語・時刻数字の桁揃え確認）へ進む。
+ROADMAP Phase 0-3（LineEdit / TextEdit での日本語変換表示・変換確定 Enter 時の accepted 挙動・複数行入力と改行の確認）を spike/fuda-spike に実装し、macOS で実機確認する。
 
 ## 最後にやったこと
 
-- Phase 0-1 の敵対的レビューを受け、`docs/ROADMAP.md` の 0-1 を `0-1a (macOS)` / `0-1b (Windows)` に分割。
-- `.gitattributes` を追加し、`Cargo.toml` の `[workspace.dependencies]` で `slint` / `slint-build` を `=1.19.0` に同期、`spike/fuda-spike/src/main.rs` に `#![deny(clippy::unwrap_used, clippy::expect_used)]` ガードと `PRAGMA foreign_keys = ON` 疎通テストを追加。
-- `--all-features`（`dev-preview`, `dev-mcp`, `dev-clock`）を含めた `fmt` / `clippy` / `test` を確認し、依存ライセンス実測と既知環境問題を `docs/PROGRESS.md` に記録。
+- `googlefonts/morisawa-biz-ud-gothic`（Version 1.051）から `BIZUDPGothic-Regular.ttf` / `BIZUDPGothic-Bold.ttf` と `OFL.txt`（SIL OFL 1.1）を `spike/fuda-spike/fonts/` へ取得。
+- TTF テーブル実測により、対象日本語・半角カナ・記号（`〜` U+301C / `～` U+FF5E / `・` / `※`）の全グリフ存在を確認。数字幅は `0,2〜9` が `1556/2048`、`1` のみ `1290/2048` で `tnum` 非搭載と確認。
+- `spike/fuda-spike/ui/main.slint` に Phase 0-2 確認画面（Regular/Bold、左右の時刻桁揃え比較、16/18/22/26px 見本）を実装し、`main.rs` にフォント同梱テストを追加して macOS での画面描画目視確認まで完了。
 
 ## 決まったこと（日付つき。新しいものを上に）
 
+- 2026-11-19 BIZ UDPゴシック（`googlefonts/morisawa-biz-ud-gothic` Version 1.051、SIL OFL 1.1）は `default-font-family: "BIZ UDPGothic"` で Regular(400) / Bold(700) とも参照可能。数字 `1` のみ幅が狭く（`1290` vs `1556/2048`）`tnum` も非搭載（Slint 1.19 側も OpenType feature 指定なし）のため、SPEC §7.4 に従い時刻欄を固定幅にして桁を揃える。
 - 2026-11-19 `Cargo.toml` の `[workspace.dependencies]` で主要クレートを一元管理し、`slint` と `slint-build` は `=1.19.0` で完全一致させる。
 - 2026-11-19 `rust-toolchain.toml` は当面 `channel = "stable"`（現環境 `rustc 1.100.0`、edition 2024）とし、Windows / CI 導入時に具体バージョン固定へ切り替える。
 - 2026-11-19 依存追加（`spike/fuda-spike`）: `slint` 1.19.0 / `slint-build` 1.19.0 — UI フレームワークと `.slint` ビルド（実測 SPDX: `GPL-3.0-only OR LicenseRef-Slint-Royalty-free-2.0 OR LicenseRef-Slint-Software-3.0`）。
@@ -50,7 +51,6 @@ Phase 0-1a（macOS ビルド・テスト・プロセス起動）完了。手元�
 ## わかっている問題
 
 - エージェントのサンドボックス内で通常の `/Users/hiro/.cargo/bin/cargo` を実行すると、`~/.cargo/bin/rustup-init` の削除試行エラー（`Operation not permitted`）や、間接依存 `convert_case 0.10.0` に同梱された `rust-toolchain.toml`（`channel = "1.83.0"`）への `rustup` 同期エラーが発生する。回避策としてツールチェーン直下（`~/.rustup/toolchains/stable-aarch64-apple-darwin/bin`）を `PATH` の先頭に置いて実行している。
-- `0-1a` の空ウィンドウはプロセス起動（エラーなし待機）まで確認済みだが、画面描画の目視確認は未実施（手元で `cargo run -p fuda-spike` にて確認予定）。
 - `0-1b`（Windows ビルド）は未確認。
 
 ## 測った数字
