@@ -44,11 +44,11 @@ fuda is currently in **Phase 0 (Technical Verification)** before building the co
 Verified so far on macOS in [`spike/fuda-spike`](spike/fuda-spike):
 
 - **0-1a:** Workspace setup with `slint` 1.19.0 and `rusqlite` (bundled SQLite 3.54.1)
-- **0-2:** Bundled **BIZ UDPGothic** font rendering, Japanese punctuation/symbols, and fixed-width time column alignment
+- **0-2:** Bundled **BIZ UDPGothic** font rendering (loaded at runtime from standalone font files rather than binary embedding), Japanese punctuation/symbols, and fixed-width time column alignment
 - **0-3a:** `LineEdit` and `TextEdit` Japanese IME preedit, multiline newlines, and ensuring IME confirmation `Enter` does not trigger `accepted`
 - **0-4:** Dynamic `Theme.font-base` scaling (16px → 26px) across text/spacing and line spacing via `line-height-factor: 1.6`
 
-Next planned technical checks include drag-and-drop (`0-5`), date/time pickers (`0-6`), non-focus-stealing always-on-top Notice Window (`0-7`), system tray background execution (`0-8`), and Windows verification (`0-1b`, `0-3b`, etc.).
+Next planned technical checks include drag-and-drop (`0-5`), date/time pickers (`0-6`), non-focus-stealing always-on-top Notice Window (`0-7`), system tray background execution (`0-8`), single-instance lock & window raise (`0-8b`), and Windows verification (`0-1b`, `0-3b`, etc.).
 
 ### Project Documentation (Japanese)
 
@@ -90,5 +90,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 - **fuda:** Licensed under the **GNU General Public License v3.0 only (`GPL-3.0-only`)**. See [LICENSE](LICENSE).
 - **Slint:** Used under the **GNU GPLv3 (`GPL-3.0-only`)** license option.
-- **BIZ UDPGothic:** Licensed under the **SIL Open Font License 1.1**. See [spike/fuda-spike/fonts/OFL.txt](spike/fuda-spike/fonts/OFL.txt).
+- **BIZ UDPGothic:** Licensed under the **SIL Open Font License 1.1**. Distributed as standalone font files (`fonts/`) loaded at runtime (Aggregate distribution alongside the `GPL-3.0-only` binary rather than static embedding). See [spike/fuda-spike/fonts/OFL.txt](spike/fuda-spike/fonts/OFL.txt).
 - **Japanese Public Holiday Data (planned for Phase 3):** Will use a processed offline copy of the Cabinet Office of Japan's [National Holidays CSV](https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html) in accordance with its terms of use.

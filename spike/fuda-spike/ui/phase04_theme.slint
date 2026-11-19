@@ -30,8 +30,8 @@ component SizeChoiceButton inherits FocusScope {
         height: 100%;
         border-radius: Theme.radius;
         background: root.selected ? Theme.select : Theme.bg;
-        border-width: root.has-focus ? 3px : 1px;
-        border-color: root.has-focus ? Theme.focus : Theme.border;
+        border-width: root.has-focus ? Theme.focus-width : 1px;
+        border-color: root.has-focus ? Theme.focus : Theme.border-control;
 
         HorizontalLayout {
             padding-left: Theme.space-2;
@@ -46,15 +46,16 @@ component SizeChoiceButton inherits FocusScope {
                 color: Theme.text;
                 horizontal-alignment: center;
                 vertical-alignment: center;
+                line-height-factor: Theme.line-height;
             }
         }
 
-        // 選択中の下線（太さ 3px、色だけに頼らない表示）
+        // 選択中の下線（3px フォーカス枠と重ならない内側へ配置し、色だけに頼らず示す）
         if root.selected: Rectangle {
             x: Theme.space-2;
-            y: parent.height - 4px;
+            y: parent.height - Theme.focus-width - Theme.indicator-height - 1px;
             width: parent.width - Theme.space-2 * 2;
-            height: 3px;
+            height: Theme.indicator-height;
             background: Theme.accent;
         }
 
@@ -151,6 +152,7 @@ component LineHeightColumn inherits Rectangle {
             font-weight: 700;
             color: root.emphasized ? Theme.accent : Theme.text-muted;
             wrap: word-wrap;
+            line-height-factor: Theme.line-height;
         }
 
         Text {
@@ -181,6 +183,7 @@ export component Phase04ThemeView inherits Rectangle {
                 font-weight: 700;
                 color: Theme.accent;
                 wrap: word-wrap;
+                line-height-factor: Theme.line-height;
             }
 
             // 1. 文字の大きさ 4段階切替
@@ -200,6 +203,7 @@ export component Phase04ThemeView inherits Rectangle {
                         font-weight: 700;
                         color: Theme.text;
                         wrap: word-wrap;
+                        line-height-factor: Theme.line-height;
                     }
 
                     HorizontalLayout {
@@ -240,7 +244,7 @@ export component Phase04ThemeView inherits Rectangle {
 
                     Text {
                         text: @tr(
-                            "基準: {}px ／ 見出し(1.5倍): {}px ／ 小さい文字(下限14px): {}px ／ 余白(space-4): {}px",
+                            "基準: {}px ／ 見出し(1.5倍): {}px ／ 小さい文字(下限14px): {}px ／ 余白(固定 space-4): {}px",
                             Math.round(Theme.font-base / 1px),
                             Math.round(Theme.font-heading / 1px),
                             Math.round(Theme.font-small / 1px),
@@ -249,11 +253,12 @@ export component Phase04ThemeView inherits Rectangle {
                         font-size: Theme.font-small;
                         color: Theme.text-muted;
                         wrap: word-wrap;
+                        line-height-factor: Theme.line-height;
                     }
                 }
             }
 
-            // 2. 文字・余白・固定幅時刻欄の追従確認
+            // 2. 文字・固定幅時刻欄の追従確認
             Rectangle {
                 background: Theme.surface;
                 border-width: 1px;
@@ -265,11 +270,12 @@ export component Phase04ThemeView inherits Rectangle {
                     spacing: Theme.space-2;
 
                     Text {
-                        text: @tr("2. 文字・余白・固定幅時刻欄の追従確認（カード見本）");
+                        text: @tr("2. 文字・固定幅時刻欄の追従確認（カード見本）");
                         font-size: Theme.font-base;
                         font-weight: 700;
                         color: Theme.text;
                         wrap: word-wrap;
+                        line-height-factor: Theme.line-height;
                     }
 
                     PreviewCard {
@@ -281,7 +287,7 @@ export component Phase04ThemeView inherits Rectangle {
                     PreviewCard {
                         time-text: @tr("23:59〜23:59");
                         title-text: @tr("長いタイトルが折り返されたときに重ならないか確認するカード");
-                        detail-text: @tr("余白も Theme.space-* に連動して広がります");
+                        detail-text: @tr("余白は固定（16px）のため、最大文字でも本文の幅が保たれます");
                     }
                 }
             }
@@ -303,6 +309,7 @@ export component Phase04ThemeView inherits Rectangle {
                         font-weight: 700;
                         color: Theme.text;
                         wrap: word-wrap;
+                        line-height-factor: Theme.line-height;
                     }
 
                     HorizontalLayout {

@@ -1,6 +1,5 @@
 // Phase 0 確認用メインウィンドウ（タブ切替で Phase 0-2〜0-4 を切り替え）
-import "../fonts/BIZUDPGothic-Regular.ttf";
-import "../fonts/BIZUDPGothic-Bold.ttf";
+// フォントは GPLv3 と SIL OFL 1.1 の分離のため Rust 側で起動時に外部ファイルから読み込む
 import { Theme } from "theme.slint";
 import { Phase02FontView } from "phase02_font.slint";
 import { Phase03ImeView } from "phase03_ime.slint";
@@ -13,9 +12,10 @@ component TabButton inherits FocusScope {
     callback clicked();
 
     min-height: Theme.touch-min;
-    min-width: 120px;
+    min-width: Theme.tab-min-width;
     accessible-role: tab;
     accessible-label: root.label;
+    accessible-checked: root.selected;
     accessible-action-default => {
         root.clicked();
     }
@@ -31,10 +31,10 @@ component TabButton inherits FocusScope {
     Rectangle {
         width: 100%;
         height: 100%;
-        border-radius: 6px;
+        border-radius: Theme.radius-md;
         background: root.selected ? Theme.select : Theme.surface;
-        border-width: root.has-focus ? 3px : 1px;
-        border-color: root.has-focus ? Theme.focus : Theme.border;
+        border-width: root.has-focus ? Theme.focus-width : 1px;
+        border-color: root.has-focus ? Theme.focus : Theme.border-control;
 
         HorizontalLayout {
             padding-left: Theme.space-3;
@@ -49,15 +49,16 @@ component TabButton inherits FocusScope {
                 color: Theme.text;
                 horizontal-alignment: center;
                 vertical-alignment: center;
+                line-height-factor: Theme.line-height;
             }
         }
 
-        // 選択中の下線（太さ 3px、色だけに頼らない表示）
+        // 選択中の下線（3px フォーカス枠と重ならない内側へ配置し、色だけに頼らず示す）
         if root.selected: Rectangle {
             x: Theme.space-2;
-            y: parent.height - 4px;
+            y: parent.height - Theme.focus-width - Theme.indicator-height - 1px;
             width: parent.width - Theme.space-2 * 2;
-            height: 3px;
+            height: Theme.indicator-height;
             background: Theme.accent;
         }
 

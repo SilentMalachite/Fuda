@@ -1,5 +1,7 @@
 #![deny(clippy::unwrap_used, clippy::expect_used)]
 
+mod fonts;
+
 use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::rc::Rc;
@@ -66,8 +68,10 @@ impl ImeSpikeState {
 
     /// 複数行入力の edited コールバックから行数・文字数を計算し記録する
     fn on_multi_edited(&mut self, text: &str) -> (i32, i32, String) {
-        let lines = i32::try_from(text.split('\n').count()).unwrap_or(i32::MAX);
-        let chars = i32::try_from(text.chars().count()).unwrap_or(i32::MAX);
+        // Windows の CRLF 改行で `\r` を 1 文字と数えないよう正規化する
+        let normalized = text.replace("\r\n", "\n");
+        let lines = i32::try_from(normalized.split('\n').count()).unwrap_or(i32::MAX);
+        let chars = i32::try_from(normalized.chars().count()).unwrap_or(i32::MAX);
         let log =
             self.push_log(|seq| format!("#{seq} [TextEdit] edited (lines={lines}, chars={chars})"));
         (lines, chars, log)
@@ -96,6 +100,24 @@ impl ImeSpikeState {
     fn event_log_text(&self) -> String {
         self.logs.iter().cloned().collect::<Vec<_>>().join("\n")
     }
+
+    /// RefCell の借用解放後に UI へ反映するためのスナップショットを作成する
+    fn snapshot(&self) -> ImeViewSnapshot {
+        ImeViewSnapshot {
+            accepted_count: self.accepted_count,
+            line_edited_count: self.line_edited_count,
+            added_cards_text: self.added_cards_text(),
+            event_log_text: self.event_log_text(),
+        }
+    }
+}
+
+/// RefCell 借用ガードを持たないまま Slint プロパティを更新するための表示用スナップショット
+struct ImeViewSnapshot {
+    accepted_count: i32,
+    line_edited_count: i32,
+    added_cards_text: String,
+    event_log_text: String,
 }
 
 /// メモリ上の SQLite 接続を開いて SQLite のバージョンを取得する
@@ -105,17 +127,24 @@ fn sqlite_version() -> anyhow::Result<String> {
     Ok(version)
 }
 
-/// `ImeSpikeState` の表示用プロパティをウィンドウへ反映する
-fn sync_ime_view(ui: &SpikeWindow, state: &ImeSpikeState) {
-    ui.set_accepted_count(state.accepted_count);
-    ui.set_line_edited_count(state.line_edited_count);
-    ui.set_added_cards_text(state.added_cards_text().into());
-    ui.set_event_log_text(state.event_log_text().into());
+/// `ImeViewSnapshot` の表示用プロパティをウィンドウへ反映する
+fn sync_ime_view(ui: &SpikeWindow, snapshot: &ImeViewSnapshot) {
+    ui.set_accepted_count(snapshot.accepted_count);
+    ui.set_line_edited_count(snapshot.line_edited_count);
+    ui.set_added_cards_text(snapshot.added_cards_text.as_str().into());
+    ui.set_event_log_text(snapshot.event_log_text.as_str().into());
 }
 
 fn main() -> anyhow::Result<()> {
     let version = sqlite_version()?;
     println!("SQLite version: {version}");
+
+    match fonts::register_bundled_fonts() {
+        Ok(dir) => println!("Bundled fonts loaded from: {}", dir.display()),
+        Err(err) => {
+            eprintln!("警告: 同梱フォントを読み込めず既定フォントにフォールバックします: {err}")
+        }
+    }
 
     let ui = SpikeWindow::new()?;
     let state = Rc::new(RefCell::new(ImeSpikeState::default()));
@@ -124,14 +153,18 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_line_accepted(move |text| {
-            let mut st = state.borrow_mut();
-            let (log, should_clear) = st.on_line_accepted(text.as_str());
+            // Slint 側コールバックの再入による BorrowMutError を防ぐため、UI 更新前に借用を解放する
+            let (log, should_clear, snapshot) = {
+                let mut st = state.borrow_mut();
+                let (log, should_clear) = st.on_line_accepted(text.as_str());
+                (log, should_clear, st.snapshot())
+            };
             println!("{log}");
             if let Some(window) = weak.upgrade() {
                 if should_clear {
                     window.set_line_text("".into());
                 }
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -140,11 +173,14 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_line_edited(move |text| {
-            let mut st = state.borrow_mut();
-            let log = st.on_line_edited(text.as_str());
+            let (log, snapshot) = {
+                let mut st = state.borrow_mut();
+                let log = st.on_line_edited(text.as_str());
+                (log, st.snapshot())
+            };
             println!("{log}");
             if let Some(window) = weak.upgrade() {
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -153,11 +189,14 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_line_key_pressed(move |key, has_modifier| {
-            let mut st = state.borrow_mut();
-            let log = st.on_key_pressed("LineEdit", key.as_str(), has_modifier);
+            let (log, snapshot) = {
+                let mut st = state.borrow_mut();
+                let log = st.on_key_pressed("LineEdit", key.as_str(), has_modifier);
+                (log, st.snapshot())
+            };
             println!("{log}");
             if let Some(window) = weak.upgrade() {
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -166,13 +205,16 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_multi_edited(move |text| {
-            let mut st = state.borrow_mut();
-            let (lines, chars, log) = st.on_multi_edited(text.as_str());
+            let (lines, chars, log, snapshot) = {
+                let mut st = state.borrow_mut();
+                let (lines, chars, log) = st.on_multi_edited(text.as_str());
+                (lines, chars, log, st.snapshot())
+            };
             println!("{log}");
             if let Some(window) = weak.upgrade() {
                 window.set_multi_line_count(lines);
                 window.set_multi_char_count(chars);
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -181,11 +223,14 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_multi_key_pressed(move |key, has_modifier| {
-            let mut st = state.borrow_mut();
-            let log = st.on_key_pressed("TextEdit", key.as_str(), has_modifier);
+            let (log, snapshot) = {
+                let mut st = state.borrow_mut();
+                let log = st.on_key_pressed("TextEdit", key.as_str(), has_modifier);
+                (log, st.snapshot())
+            };
             println!("{log}");
             if let Some(window) = weak.upgrade() {
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -194,11 +239,14 @@ fn main() -> anyhow::Result<()> {
         let weak = ui.as_weak();
         let state = Rc::clone(&state);
         ui.on_clear_all(move || {
-            let mut st = state.borrow_mut();
-            st.clear();
+            let snapshot = {
+                let mut st = state.borrow_mut();
+                st.clear();
+                st.snapshot()
+            };
             println!("[clear] ログと一覧を初期化しました");
             if let Some(window) = weak.upgrade() {
-                sync_ime_view(&window, &st);
+                sync_ime_view(&window, &snapshot);
             }
         });
     }
@@ -321,6 +369,10 @@ mod tests {
         let (lines, chars, _) = state.on_multi_edited("１行目：歯医者\n２行目：買い物\n");
         assert_eq!(lines, 3);
         assert_eq!(chars, 16);
+
+        let (lines, chars, _) = state.on_multi_edited("1行目\r\n2行目");
+        assert_eq!(lines, 2);
+        assert_eq!(chars, 7);
 
         state.on_key_pressed("TextEdit", "Return", false);
         assert!(!state.event_log_text().is_empty());

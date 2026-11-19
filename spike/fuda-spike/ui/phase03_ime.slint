@@ -8,7 +8,7 @@ component ActionButton inherits FocusScope {
     callback clicked();
 
     min-height: Theme.touch-min;
-    min-width: 140px;
+    min-width: Theme.action-min-width;
     accessible-role: button;
     accessible-label: root.label;
     accessible-action-default => {
@@ -28,8 +28,8 @@ component ActionButton inherits FocusScope {
         height: 100%;
         border-radius: Theme.radius;
         background: touch.pressed ? Theme.select : Theme.surface;
-        border-width: root.has-focus ? 3px : 1px;
-        border-color: root.has-focus ? Theme.focus : Theme.border;
+        border-width: root.has-focus ? Theme.focus-width : 1px;
+        border-color: root.has-focus ? Theme.focus : Theme.border-control;
 
         HorizontalLayout {
             padding-left: Theme.space-4;
@@ -44,6 +44,7 @@ component ActionButton inherits FocusScope {
                 color: Theme.text;
                 horizontal-alignment: center;
                 vertical-alignment: center;
+                line-height-factor: Theme.line-height;
             }
         }
 
@@ -93,6 +94,7 @@ export component Phase03ImeView inherits Rectangle {
                     font-weight: 700;
                     color: Theme.accent;
                     wrap: word-wrap;
+                    line-height-factor: Theme.line-height;
                 }
 
                 Text {
@@ -100,6 +102,7 @@ export component Phase03ImeView inherits Rectangle {
                     font-size: Theme.font-small;
                     color: Theme.text-muted;
                     wrap: word-wrap;
+                    line-height-factor: Theme.line-height;
                 }
             }
 
@@ -120,6 +123,7 @@ export component Phase03ImeView inherits Rectangle {
                         font-weight: 700;
                         color: Theme.text;
                         wrap: word-wrap;
+                        line-height-factor: Theme.line-height;
                     }
 
                     line_input := LineEdit {
@@ -127,6 +131,7 @@ export component Phase03ImeView inherits Rectangle {
                         font-size: Theme.font-base;
                         text <=> root.line-text;
                         placeholder-text: @tr("思いついたことを書く（変換確定 Enter と追加 Enter を試す）");
+                        accessible-label: @tr("1行入力のテスト欄");
                         accepted(text) => {
                             root.line-accepted(text);
                         }
@@ -163,6 +168,7 @@ export component Phase03ImeView inherits Rectangle {
                                 font-weight: 700;
                                 color: Theme.accent;
                                 vertical-alignment: center;
+                                line-height-factor: Theme.line-height;
                             }
 
                             Text {
@@ -170,6 +176,7 @@ export component Phase03ImeView inherits Rectangle {
                                 font-size: Theme.font-base;
                                 color: Theme.text-muted;
                                 vertical-alignment: center;
+                                line-height-factor: Theme.line-height;
                             }
                         }
 
@@ -186,7 +193,7 @@ export component Phase03ImeView inherits Rectangle {
                         background: Theme.bg;
                         border-width: 1px;
                         border-color: Theme.border;
-                        border-radius: 6px;
+                        border-radius: Theme.radius-md;
 
                         VerticalLayout {
                             padding: Theme.space-3;
@@ -197,6 +204,7 @@ export component Phase03ImeView inherits Rectangle {
                                 font-size: Theme.font-small;
                                 font-weight: 700;
                                 color: Theme.text-muted;
+                                line-height-factor: Theme.line-height;
                             }
 
                             Text {
@@ -204,6 +212,7 @@ export component Phase03ImeView inherits Rectangle {
                                 font-size: Theme.font-base;
                                 color: root.added-cards-text != "" ? Theme.text : Theme.text-muted;
                                 wrap: word-wrap;
+                                line-height-factor: Theme.line-height;
                             }
                         }
                     }
@@ -230,6 +239,7 @@ export component Phase03ImeView inherits Rectangle {
                             font-weight: 700;
                             color: Theme.text;
                             vertical-alignment: center;
+                            line-height-factor: Theme.line-height;
                         }
 
                         Text {
@@ -238,15 +248,17 @@ export component Phase03ImeView inherits Rectangle {
                             font-weight: 700;
                             color: Theme.accent;
                             vertical-alignment: center;
+                            line-height-factor: Theme.line-height;
                         }
                     }
 
                     TextEdit {
-                        min-height: 130px;
+                        min-height: Theme.multi-input-min-height;
                         font-size: Theme.font-base;
                         wrap: word-wrap;
                         text <=> root.multi-text;
                         placeholder-text: @tr("複数行の本文を書く（日本語変換と Enter 改行を試す）");
+                        accessible-label: @tr("複数行入力のテスト欄");
                         edited(text) => {
                             root.multi-edited(text);
                         }
@@ -285,14 +297,15 @@ export component Phase03ImeView inherits Rectangle {
                         font-size: Theme.font-base;
                         font-weight: 700;
                         color: Theme.text;
+                        line-height-factor: Theme.line-height;
                     }
 
                     Rectangle {
                         background: Theme.bg;
                         border-width: 1px;
                         border-color: Theme.border;
-                        border-radius: 6px;
-                        min-height: 96px;
+                        border-radius: Theme.radius-md;
+                        min-height: Theme.log-box-min-height;
 
                         VerticalLayout {
                             padding: Theme.space-3;
@@ -302,6 +315,7 @@ export component Phase03ImeView inherits Rectangle {
                                 font-size: Theme.font-small;
                                 color: root.event-log-text != "" ? Theme.text : Theme.text-muted;
                                 wrap: word-wrap;
+                                line-height-factor: Theme.line-height;
                             }
                         }
                     }

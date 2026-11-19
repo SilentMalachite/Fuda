@@ -11,5 +11,5 @@ license = "GPL-3.0-only"
 [workspace.dependencies]
 anyhow = "1.0.104"
 rusqlite = { version = "0.43.0", features = ["bundled"] }
-slint = "=1.19.0"
+slint = { version = "=1.19.0", features = ["unstable-fontique-012"] }
 slint-build = "=1.19.0"

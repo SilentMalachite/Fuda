@@ -44,11 +44,11 @@
 [`spike/fuda-spike`](spike/fuda-spike) にて macOS 上で確認済みの項目:
 
 - **0-1a:** workspace 構成、`slint` 1.19.0 と `rusqlite`（SQLite 3.54.1 同梱）の起動疎通
-- **0-2:** BIZ UDPゴシック（Regular / Bold）の同梱表示、日本語・記号表示、固定幅による時刻数字の桁揃え
+- **0-2:** BIZ UDPゴシック（Regular / Bold）の外部ファイルからの実行時読込（バイナリ静的埋め込みなし）、日本語・記号表示、固定幅による時刻数字の桁揃え
 - **0-3a:** macOS での `LineEdit` / `TextEdit` 日本語入力（変換中の表示、変換確定 Enter で `accepted` が呼ばれないこと、複数行の改行）
 - **0-4:** `Theme.font-base` の 4 段階切替（16px → 26px）に連動した文字・余白の追従、および `line-height-factor: 1.6` による行間指定
 
-今後はドラッグ＆ドロップ（`0-5`）、日付・時刻の選択（`0-6`）、フォーカスを奪わない知らせの窓（`0-7`）、トレイ常駐（`0-8`）、および Windows 環境での確認（`0-1b`, `0-3b` 等）を進めていきます。
+今後はドラッグ＆ドロップ（`0-5`）、日付・時刻の選択（`0-6`）、フォーカスを奪わない知らせの窓（`0-7`）、トレイ常駐（`0-8`）、二重起動防止（`0-8b`）、および Windows 環境での確認（`0-1b`, `0-3b` 等）を進めていきます。
 
 ### ドキュメント
 
@@ -90,5 +90,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 - **fuda 本体:** **GNU General Public License v3.0 only（`GPL-3.0-only`）** で提供します。条文は [LICENSE](LICENSE) をご覧ください。
 - **Slint:** **GNU GPLv3（`GPL-3.0-only`）** のライセンスを選択して利用しています。
-- **BIZ UDPゴシック（BIZ UDPGothic）:** **SIL Open Font License 1.1** のもとで同梱しています。条文は [spike/fuda-spike/fonts/OFL.txt](spike/fuda-spike/fonts/OFL.txt) をご覧ください。
+- **BIZ UDPゴシック（BIZ UDPGothic）:** **SIL Open Font License 1.1** のもとで、バイナリへ静的に埋め込まず独立したフォントファイル（`fonts/`、集合体／Aggregate 配布）として同梱し、起動時に外部ファイルから読み込んでいます。条文は [spike/fuda-spike/fonts/OFL.txt](spike/fuda-spike/fonts/OFL.txt) をご覧ください。
 - **祝日データ（Phase 3 で導入予定）:** 内閣府『[国民の祝日について](https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html)』の CSV を利用規約に従って加工・同梱する予定です。
