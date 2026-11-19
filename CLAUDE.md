@@ -49,7 +49,7 @@
 
 | 用途 | 使うもの | 補足 |
 |---|---|---|
-| UI | `slint` 1.19 系、`slint-build` | ライセンスは SPEC §11（LGPL 版はない。Royalty-free 2.0 が既定案） |
+| UI | `slint` 1.19 系、`slint-build` | ライセンスは SPEC §11（LGPL 版はない。GNU GPLv3（`GPL-3.0-only`）を採用） |
 | DB | `rusqlite`（features = `["bundled"]`） | SQLite を一緒にビルドする。WAL |
 | 日付・時刻 | `chrono` | 「今日」「いま」は `Clock` トレイトから取る（テストで差し替える） |
 | エラー | `thiserror`（core）、`anyhow`（app） | |

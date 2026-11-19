@@ -15,11 +15,12 @@ ROADMAP Phase 0-5（`DragArea` / `DropArea` で 2 列間のカード移動と置
 
 ## 最後にやったこと
 
-- `palette.slint` を `theme.slint`（`global Theme`）へ統合し、`font-base` 連動の `font-heading` / `font-small` / `space-*` / `time-range-width` と `line-height: 1.6` を定義。
-- `phase04_theme.slint`（16/18/22/26px 切替、カード見本、`line-height-factor` 1.0 vs 1.6 左右比較）と `main.rs` の TTF 垂直メトリクス検証テストを追加し、macOS での目視確認まで完了。
+- ライセンスを GNU GPLv3（`GPL-3.0-only`）に統一し、`LICENSE`・`README.md`（英語）・`README.ja.md`（日本語）を作成。
+- `Cargo.toml` / `spike/fuda-spike/Cargo.toml` / `CLAUDE.md` / `docs/SPEC.md`（§11, §13）/ `docs/ROADMAP.md` のライセンス表記を `GPL-3.0-only` へ更新。
 
 ## 決まったこと（日付つき。新しいものを上に）
 
+- 2026-11-19 ライセンスを GNU GPLv3（`GPL-3.0-only`）に統一して確定（Slint に LGPL 版はなく、オープンソース向けライセンス `GPL-3.0-only` にそろえる。`LICENSE`・`Cargo.toml`・`README.md`・`README.ja.md`・`SPEC.md` §11/§13 を整備済み）。
 - 2026-11-19 Slint 1.19.0 は Text の line-height-factor をサポート。BIZ UDPゴシック（Regular/Bold とも unitsPerEm=2048, asc=1802, desc=-246, gap=0）の natural line height は厳密に 1.0000em のため、line-height-factor: 1.6 で SPEC §7.1 の目安 1.6 倍になる。
 - 2026-11-19 Slint 1.19.0 の LineEdit / TextEdit は macOS の日本語 IME で変換中表示・変換確定 Enter 時の accepted 非発火・複数行改行とも正常動作を確認（Windows 確認は 0-3b として別途実施）。
 - 2026-11-19 BIZ UDPゴシック（`googlefonts/morisawa-biz-ud-gothic` Version 1.051、SIL OFL 1.1）は `default-font-family: "BIZ UDPGothic"` で Regular(400) / Bold(700) とも参照可能。数字 `1` のみ幅が狭く（`1290` vs `1556/2048`）`tnum` も非搭載（Slint 1.19 側も OpenType feature 指定なし）のため、SPEC §7.4 に従い時刻欄を固定幅にして桁を揃える。

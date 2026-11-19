@@ -1054,19 +1054,17 @@ crates/
 | Slint Royalty-free License 2.0 | 無料 | デスクトップ・モバイル・Web アプリ向け（組み込み機器は対象外）。Slint を使っていることを表示する: アプリの「このアプリについて」画面に `AboutSlint` ウィジェットを出す、または配布ページに「Made with Slint」バッジを出す |
 | Commercial（有料） | 有料 | 組み込み機器、表示をしたくない場合など |
 
-**このプロジェクトの既定案: Royalty-free License 2.0**（§13 で最終決定）。
+**このプロジェクトの決定: GNU GPLv3（`GPL-3.0-only`）**（2026-11-19 決定）。
 
-- 「このアプリについて」画面（サイドバーの「設定」から1回で開ける。macOS ではアプリのメニューの「fuda について」からも開く）に `AboutSlint` を出す。
-- README（とリリースのページ）に「Made with Slint」バッジも出す。
-- GPLv3 を選ぶ場合は、この節と README を書き換える。
-- 最終的な判断は、Slint のライセンス原文で確認する。
+- Slint には LGPL 版が存在しないため、オープンソース向けライセンスである `GPL-3.0-only` を選択し、fuda 全体も同じ `GPL-3.0-only` で配布する。
+- `AboutSlint` や「Made with Slint」バッジの表示は GPLv3 では義務ではないが、利用技術の紹介として表示してよい。
 
 ### 11.2 そのほか
 
-- このアプリのコード: MIT（§13 で最終決定。`MIT OR Apache-2.0` も候補）。
+- このアプリのコード: GNU GPLv3（`GPL-3.0-only`）（2026-11-19 決定。ルートに `LICENSE` を配置）。
 - BIZ UDPゴシック: SIL Open Font License 1.1。フォントと一緒に `OFL.txt` を同梱し、「このアプリについて」に表示する。
 - 祝日のデータ: 内閣府の「国民の祝日」の CSV を加工して使う。内閣府ホームページの利用規約（CC BY 互換）に従い、「このアプリについて」と README に出典を書く。例: 「祝日: 内閣府『国民の祝日』について（https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html）の CSV を加工して作成」。利用規約の最新の条件は、データを更新するときに確かめる。
-- 依存クレートのライセンスは `cargo deny check licenses` で確認する（`deny.toml` で許可するもの: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, OFL-1.1 と、Slint のライセンス）。`notify-rust`・`auto-launch` など知らせまわりのクレートも、入れる前に確認する。
+- 依存クレートのライセンスは `cargo deny check licenses` で確認する（`deny.toml` で許可するもの: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, Unicode-3.0, OFL-1.1 と、Slint の `GPL-3.0-only`）。`notify-rust`・`auto-launch` など知らせまわりのクレートも、入れる前に確認する。
 - 第三者ライセンスの一覧は `cargo about` などで作り、「このアプリについて」から見られるようにする（Phase 9）。
 
 ---
@@ -1096,8 +1094,8 @@ crates/
 
 | # | こと | いまの案 | 決める時期 |
 |---|---|---|---|
-| 1 | Slint のライセンス | Royalty-free 2.0（§11.1） | Phase 0 のあと |
-| 2 | このアプリのコードのライセンス | MIT | Phase 0 のあと |
+| 1 | Slint のライセンス | GNU GPLv3（`GPL-3.0-only`） | 決定済み（2026-11-19） |
+| 2 | このアプリのコードのライセンス | GNU GPLv3（`GPL-3.0-only`） | 決定済み（2026-11-19） |
 | 3 | 先に配布する OS | macOS と Windows を同時（どちらかを先にするか） | Phase 9 の前 |
 | 4 | 新しい予定に、知らせを最初から付けておくか | 付けない（自分で足す）。付けるなら設定で「30分前」など | Phase 4 を使ってから |
 | 5 | 知らせの窓のフォーカスを奪わない方法が、ある OS でできなかったとき | Phase 0 の結果で決める | Phase 0 のあと |
