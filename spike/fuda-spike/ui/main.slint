@@ -1,122 +1,76 @@
-// Phase 0-2 確認用ウィンドウ: BIZ UDPゴシックの import、日本語・記号表示、時刻数字の桁揃え確認
-import { ScrollView } from "std-widgets.slint";
+// Phase 0 確認用メインウィンドウ（タブ切替で Phase 0-2 と Phase 0-3 を切り替え）
 import "../fonts/BIZUDPGothic-Regular.ttf";
 import "../fonts/BIZUDPGothic-Bold.ttf";
+import { SpikePalette } from "palette.slint";
+import { Phase02FontView } from "phase02_font.slint";
+import { Phase03ImeView } from "phase03_ime.slint";
 
-// SPEC §7.2「やさしい」配色トークン（確認用）
-global SpikePalette {
-    out property <color> bg: #F3F1EC;
-    out property <color> surface: #FBFAF7;
-    out property <color> text: #2E2E2B;
-    out property <color> text-muted: #5E5D58;
-    out property <color> border: #D9D5CC;
-    out property <color> accent: #2F6F6A;
-}
-
-// そのまま時刻とタイトルを連結した比較用の行
-component PlainTimeRow inherits Rectangle {
+// タブ切り替えボタン（最小高さ 44px、3px フォーカス枠、色だけに頼らない選択表示）
+component TabButton inherits FocusScope {
     in property <string> label;
+    in property <bool> selected: false;
+    callback clicked();
 
-    min-height: 28px;
-    border-width: 1px;
-    border-color: SpikePalette.border;
-    border-radius: 4px;
-    background: SpikePalette.bg;
-
-    HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-
-        Text {
-            text: root.label;
-            font-size: 16px;
-            color: SpikePalette.text;
-            vertical-alignment: center;
-        }
+    min-height: 44px;
+    min-width: 180px;
+    accessible-role: tab;
+    accessible-label: root.label;
+    accessible-action-default => {
+        root.clicked();
     }
-}
 
-// 回避策: 時刻欄を固定幅にしてタイトルの開始位置を揃えた比較用の行
-component FixedTimeRow inherits Rectangle {
-    in property <string> time-text;
-    in property <string> title-text;
+    key-pressed(event) => {
+        if (event.text == Key.Return || event.text == " ") {
+            root.clicked();
+            return EventResult.accept;
+        }
+        return EventResult.reject;
+    }
 
-    min-height: 28px;
-    border-width: 1px;
-    border-color: SpikePalette.border;
-    border-radius: 4px;
-    background: SpikePalette.bg;
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: 6px;
+        background: root.selected ? SpikePalette.select : SpikePalette.surface;
+        border-width: root.has-focus ? 3px : 1px;
+        border-color: root.has-focus ? SpikePalette.focus : SpikePalette.border;
 
-    HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        padding-top: 4px;
-        padding-bottom: 4px;
-        spacing: 8px;
-
-        // 23:59〜23:59 が 16px (Bold でも約 124px) で余裕を持って収まる固定幅（140px）
-        Rectangle {
-            width: 140px;
-            horizontal-stretch: 0;
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 8px;
+            padding-bottom: 8px;
 
             Text {
-                width: 100%;
-                text: root.time-text;
+                text: root.label;
                 font-size: 16px;
+                font-weight: root.selected ? 700 : 400;
                 color: SpikePalette.text;
-                horizontal-alignment: left;
+                horizontal-alignment: center;
                 vertical-alignment: center;
             }
+        }
 
-            // 固定幅の境界を視認するためのガイド線
-            Rectangle {
-                x: parent.width - 1px;
-                width: 1px;
-                height: 100%;
-                background: SpikePalette.border;
+        // 選択中の下線（太さ 3px、色だけに頼らない表示）
+        if root.selected: Rectangle {
+            x: 8px;
+            y: parent.height - 4px;
+            width: parent.width - 16px;
+            height: 3px;
+            background: SpikePalette.accent;
+        }
+
+        TouchArea {
+            clicked => {
+                root.focus();
+                root.clicked();
             }
         }
-
-        Text {
-            text: root.title-text;
-            font-size: 16px;
-            color: SpikePalette.text;
-            vertical-alignment: center;
-            wrap: word-wrap;
-        }
-    }
-}
-
-// 4段階の文字サイズ見本行
-component FontSizeSampleRow inherits HorizontalLayout {
-    in property <string> size-label;
-    in property <length> sample-size;
-    in property <string> sample-text;
-
-    spacing: 12px;
-
-    Text {
-        width: 56px;
-        text: root.size-label;
-        font-size: 14px;
-        font-weight: 700;
-        color: SpikePalette.text-muted;
-        vertical-alignment: center;
-    }
-
-    Text {
-        text: root.sample-text;
-        font-size: root.sample-size;
-        color: SpikePalette.text;
-        vertical-alignment: center;
-        wrap: word-wrap;
     }
 }
 
 export component SpikeWindow inherits Window {
-    title: @tr("fuda 技術確認 (Phase 0-2: フォントと時刻の桁揃え)");
+    title: @tr("fuda 技術確認 (Phase 0-3: 日本語入力と IME)");
     min-width: 960px;
     min-height: 640px;
     preferred-width: 960px;
@@ -125,201 +79,94 @@ export component SpikeWindow inherits Window {
     default-font-family: "BIZ UDPGothic";
     default-font-size: 16px;
 
-    ScrollView {
+    // 0: Phase 0-2 フォント確認、1: Phase 0-3 日本語入力確認（初期表示）
+    in-out property <int> active-tab: 1;
+
+    // Phase 0-3 用の公開プロパティ・コールバック（Rust 側との橋渡し）
+    in-out property <string> line-text: "";
+    in-out property <string> multi-text: "";
+    in property <int> accepted-count: 0;
+    in property <int> line-edited-count: 0;
+    in property <int> multi-line-count: 1;
+    in property <int> multi-char-count: 0;
+    in property <string> added-cards-text: "";
+    in property <string> event-log-text: "";
+
+    callback line-accepted(string);
+    callback line-edited(string);
+    callback line-key-pressed(string, bool);
+    callback multi-edited(string);
+    callback multi-key-pressed(string, bool);
+    callback clear-all();
+
+    VerticalLayout {
         width: 100%;
         height: 100%;
 
-        VerticalLayout {
-            padding: 16px;
-            spacing: 16px;
+        // 上部タブバー
+        Rectangle {
+            background: SpikePalette.surface;
+            border-width: 1px;
+            border-color: SpikePalette.border;
 
-            // ヘッダー
-            VerticalLayout {
-                spacing: 4px;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                spacing: 12px;
+                alignment: start;
 
-                Text {
-                    text: @tr("Phase 0-2: BIZ UDPゴシックと時刻数字の桁揃え確認");
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: SpikePalette.accent;
+                TabButton {
+                    label: @tr("0-2 フォント");
+                    selected: root.active-tab == 0;
+                    clicked => {
+                        root.active-tab = 0;
+                    }
                 }
 
-                Text {
-                    text: @tr("BIZUDPGothic-Regular (400) / Bold (700) を同梱し、日本語・記号・数字幅の差異を検証します。");
-                    font-size: 14px;
-                    color: SpikePalette.text-muted;
-                    wrap: word-wrap;
-                }
-            }
-
-            // 1. 日本語と記号の表示（Regular 400 / Bold 700 比較）
-            Rectangle {
-                background: SpikePalette.surface;
-                border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
-
-                VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
-
-                    Text {
-                        text: @tr("1. 日本語・半角カナ・記号の表示（Regular 400 / Bold 700）");
-                        font-size: 16px;
-                        font-weight: 700;
-                        color: SpikePalette.text;
-                    }
-
-                    Text {
-                        text: @tr("[Regular 400] あいうえお ぁぃぅぇぉ っゃゅょ ／ アイウエオ ｶﾀｶﾅ ／ 予定・やること・知らせ・歯医者・勤労感謝の日");
-                        font-weight: 400;
-                        color: SpikePalette.text;
-                        wrap: word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("[Bold 700] あいうえお ぁぃぅぇぉ っゃゅょ ／ アイウエオ ｶﾀｶﾅ ／ 予定・やること・知らせ・歯医者・勤労感謝の日");
-                        font-weight: 700;
-                        color: SpikePalette.text;
-                        wrap: word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("[記号 Regular] 波ダッシュ(U+301C): 10:00〜11:00 ／ 全角チルダ(U+FF5E): 10:00～11:00 ／ 中黒: やること・予定・メモ ／ 米印: ※この回だけ休み");
-                        font-weight: 400;
-                        color: SpikePalette.text;
-                        wrap: word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("[記号 Bold] 波ダッシュ(U+301C): 10:00〜11:00 ／ 全角チルダ(U+FF5E): 10:00～11:00 ／ 中黒: やること・予定・メモ ／ 米印: ※この回だけ休み");
-                        font-weight: 700;
-                        color: SpikePalette.text;
-                        wrap: word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("[紛らわしい字] 0O 1Il 濁点・半濁点 ばぱ びぴ ぶぷ べぺ ぼぽ");
-                        font-weight: 400;
-                        color: SpikePalette.text-muted;
-                        wrap: word-wrap;
+                TabButton {
+                    label: @tr("0-3 日本語入力");
+                    selected: root.active-tab == 1;
+                    clicked => {
+                        root.active-tab = 1;
                     }
                 }
             }
+        }
 
-            // 2. 時刻の数字の桁揃え確認（左右 2 列比較）
-            Rectangle {
-                background: SpikePalette.surface;
-                border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
+        // タブに応じた確認ビュー
+        if root.active-tab == 0: Phase02FontView {
+            vertical-stretch: 1;
+        }
 
-                VerticalLayout {
-                    padding: 12px;
-                    spacing: 10px;
-
-                    Text {
-                        text: @tr("2. 時刻の数字の桁揃え確認（左右比較）");
-                        font-size: 16px;
-                        font-weight: 700;
-                        color: SpikePalette.text;
-                    }
-
-                    Text {
-                        text: @tr("BIZ UDPゴシックは数字「1」のみ幅が狭く（1290 vs 1556/2048）、tnum も無いため、左列ではズレます。右列のように時刻欄の幅を固定（140px）すると揃います。");
-                        font-size: 14px;
-                        color: SpikePalette.text-muted;
-                        wrap: word-wrap;
-                    }
-
-                    HorizontalLayout {
-                        spacing: 16px;
-
-                        // 左列: そのまま並べた場合
-                        VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 6px;
-
-                            Text {
-                                text: @tr("そのまま並べた場合（時刻＋予定名を連結）");
-                                font-size: 14px;
-                                font-weight: 700;
-                                color: SpikePalette.text-muted;
-                            }
-
-                            PlainTimeRow { label: @tr("00:00 予定A"); }
-                            PlainTimeRow { label: @tr("11:11 予定B"); }
-                            PlainTimeRow { label: @tr("08:30 予定C"); }
-                            PlainTimeRow { label: @tr("10:00〜11:00 歯医者・○○歯科"); }
-                            PlainTimeRow { label: @tr("11:11〜11:11 最短幅の確認"); }
-                            PlainTimeRow { label: @tr("23:59〜23:59 最長幅の確認"); }
-                        }
-
-                        // 右列: 回避策（固定幅）
-                        VerticalLayout {
-                            horizontal-stretch: 1;
-                            spacing: 6px;
-
-                            Text {
-                                text: @tr("回避策: 時刻欄を固定幅にした場合（SPEC §7.4）");
-                                font-size: 14px;
-                                font-weight: 700;
-                                color: SpikePalette.accent;
-                            }
-
-                            FixedTimeRow { time-text: @tr("00:00"); title-text: @tr("予定A"); }
-                            FixedTimeRow { time-text: @tr("11:11"); title-text: @tr("予定B"); }
-                            FixedTimeRow { time-text: @tr("08:30"); title-text: @tr("予定C"); }
-                            FixedTimeRow { time-text: @tr("10:00〜11:00"); title-text: @tr("歯医者・○○歯科"); }
-                            FixedTimeRow { time-text: @tr("11:11〜11:11"); title-text: @tr("最短幅の確認"); }
-                            FixedTimeRow { time-text: @tr("23:59〜23:59"); title-text: @tr("最長幅の確認"); }
-                        }
-                    }
-                }
+        if root.active-tab == 1: Phase03ImeView {
+            vertical-stretch: 1;
+            line-text <=> root.line-text;
+            multi-text <=> root.multi-text;
+            accepted-count: root.accepted-count;
+            line-edited-count: root.line-edited-count;
+            multi-line-count: root.multi-line-count;
+            multi-char-count: root.multi-char-count;
+            added-cards-text: root.added-cards-text;
+            event-log-text: root.event-log-text;
+            line-accepted(text) => {
+                root.line-accepted(text);
             }
-
-            // 3. 4段階の文字サイズ見本（SPEC §7.1: 16 / 18 / 22 / 26px）
-            Rectangle {
-                background: SpikePalette.surface;
-                border-width: 1px;
-                border-color: SpikePalette.border;
-                border-radius: 8px;
-
-                VerticalLayout {
-                    padding: 12px;
-                    spacing: 8px;
-
-                    Text {
-                        text: @tr("3. 文字の大きさ 4 段階見本（SPEC §7.1: 16 / 18 / 22 / 26px）");
-                        font-size: 16px;
-                        font-weight: 700;
-                        color: SpikePalette.text;
-                    }
-
-                    FontSizeSampleRow {
-                        size-label: @tr("16px");
-                        sample-size: 16px;
-                        sample-text: @tr("16px: 今日 10:00〜11:00 歯医者 ※30分前に知らせ");
-                    }
-
-                    FontSizeSampleRow {
-                        size-label: @tr("18px");
-                        sample-size: 18px;
-                        sample-text: @tr("18px: 今日 10:00〜11:00 歯医者 ※30分前に知らせ");
-                    }
-
-                    FontSizeSampleRow {
-                        size-label: @tr("22px");
-                        sample-size: 22px;
-                        sample-text: @tr("22px: 今日 10:00〜11:00 歯医者 ※30分前に知らせ");
-                    }
-
-                    FontSizeSampleRow {
-                        size-label: @tr("26px");
-                        sample-size: 26px;
-                        sample-text: @tr("26px: 今日 10:00〜11:00 歯医者 ※30分前に知らせ");
-                    }
-                }
+            line-edited(text) => {
+                root.line-edited(text);
+            }
+            line-key-pressed(key, has-mod) => {
+                root.line-key-pressed(key, has-mod);
+            }
+            multi-edited(text) => {
+                root.multi-edited(text);
+            }
+            multi-key-pressed(key, has-mod) => {
+                root.multi-key-pressed(key, has-mod);
+            }
+            clear-all => {
+                root.clear-all();
             }
         }
     }

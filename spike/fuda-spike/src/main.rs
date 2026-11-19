@@ -1,5 +1,9 @@
 #![deny(clippy::unwrap_used, clippy::expect_used)]
 
+use std::cell::RefCell;
+use std::collections::VecDeque;
+use std::rc::Rc;
+
 // Slint が生成するモジュールコード内部では .unwrap() が使われるため生成領域のみ許可する
 #[allow(clippy::unwrap_used, clippy::expect_used)]
 mod ui {
@@ -9,6 +13,91 @@ mod ui {
 use slint::ComponentHandle;
 use ui::SpikeWindow;
 
+const MAX_ADDED_CARDS: usize = 10;
+const MAX_EVENT_LOGS: usize = 12;
+
+/// Phase 0-3 の日本語入力確認でイベント回数・追加一覧・観測ログを保持する状態
+#[derive(Debug, Default)]
+struct ImeSpikeState {
+    seq: usize,
+    accepted_count: i32,
+    line_edited_count: i32,
+    added_cards: Vec<String>,
+    logs: VecDeque<String>,
+}
+
+impl ImeSpikeState {
+    /// シーケンス番号を進めて先頭にログを追記し、最大件数に丸める
+    fn push_log(&mut self, message: impl FnOnce(usize) -> String) -> String {
+        self.seq = self.seq.saturating_add(1);
+        let line = message(self.seq);
+        self.logs.push_front(line.clone());
+        self.logs.truncate(MAX_EVENT_LOGS);
+        line
+    }
+
+    /// 1行入力の accepted コールバックを記録し、空白でなければカードを追加する
+    fn on_line_accepted(&mut self, text: &str) -> (String, bool) {
+        self.accepted_count = self.accepted_count.saturating_add(1);
+        let trimmed = text.trim();
+        let should_clear = if trimmed.is_empty() {
+            false
+        } else {
+            self.added_cards.insert(0, trimmed.to_string());
+            self.added_cards.truncate(MAX_ADDED_CARDS);
+            true
+        };
+        let log = self.push_log(|seq| format!("#{seq} [LineEdit] accepted: \"{text}\""));
+        (log, should_clear)
+    }
+
+    /// 1行入力の edited コールバックを記録する
+    fn on_line_edited(&mut self, text: &str) -> String {
+        self.line_edited_count = self.line_edited_count.saturating_add(1);
+        self.push_log(|seq| format!("#{seq} [LineEdit] edited: \"{text}\""))
+    }
+
+    /// キー押下イベントを記録する
+    fn on_key_pressed(&mut self, source: &str, key: &str, has_modifier: bool) -> String {
+        self.push_log(|seq| {
+            format!("#{seq} [{source}] key-pressed: {key} (modifier={has_modifier})")
+        })
+    }
+
+    /// 複数行入力の edited コールバックから行数・文字数を計算し記録する
+    fn on_multi_edited(&mut self, text: &str) -> (i32, i32, String) {
+        let lines = i32::try_from(text.split('\n').count()).unwrap_or(i32::MAX);
+        let chars = i32::try_from(text.chars().count()).unwrap_or(i32::MAX);
+        let log =
+            self.push_log(|seq| format!("#{seq} [TextEdit] edited (lines={lines}, chars={chars})"));
+        (lines, chars, log)
+    }
+
+    /// カウンタ・カード一覧・ログをすべて初期化する
+    fn clear(&mut self) {
+        self.seq = 0;
+        self.accepted_count = 0;
+        self.line_edited_count = 0;
+        self.added_cards.clear();
+        self.logs.clear();
+    }
+
+    /// 追加されたカード一覧を番号付き文字列へ整形する
+    fn added_cards_text(&self) -> String {
+        self.added_cards
+            .iter()
+            .enumerate()
+            .map(|(idx, title)| format!("{}. {title}", idx + 1))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    /// イベントログを改行区切り文字列へ整形する
+    fn event_log_text(&self) -> String {
+        self.logs.iter().cloned().collect::<Vec<_>>().join("\n")
+    }
+}
+
 /// メモリ上の SQLite 接続を開いて SQLite のバージョンを取得する
 fn sqlite_version() -> anyhow::Result<String> {
     let conn = rusqlite::Connection::open_in_memory()?;
@@ -16,11 +105,104 @@ fn sqlite_version() -> anyhow::Result<String> {
     Ok(version)
 }
 
+/// `ImeSpikeState` の表示用プロパティをウィンドウへ反映する
+fn sync_ime_view(ui: &SpikeWindow, state: &ImeSpikeState) {
+    ui.set_accepted_count(state.accepted_count);
+    ui.set_line_edited_count(state.line_edited_count);
+    ui.set_added_cards_text(state.added_cards_text().into());
+    ui.set_event_log_text(state.event_log_text().into());
+}
+
 fn main() -> anyhow::Result<()> {
     let version = sqlite_version()?;
     println!("SQLite version: {version}");
 
     let ui = SpikeWindow::new()?;
+    let state = Rc::new(RefCell::new(ImeSpikeState::default()));
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_line_accepted(move |text| {
+            let mut st = state.borrow_mut();
+            let (log, should_clear) = st.on_line_accepted(text.as_str());
+            println!("{log}");
+            if let Some(window) = weak.upgrade() {
+                if should_clear {
+                    window.set_line_text("".into());
+                }
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_line_edited(move |text| {
+            let mut st = state.borrow_mut();
+            let log = st.on_line_edited(text.as_str());
+            println!("{log}");
+            if let Some(window) = weak.upgrade() {
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_line_key_pressed(move |key, has_modifier| {
+            let mut st = state.borrow_mut();
+            let log = st.on_key_pressed("LineEdit", key.as_str(), has_modifier);
+            println!("{log}");
+            if let Some(window) = weak.upgrade() {
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_multi_edited(move |text| {
+            let mut st = state.borrow_mut();
+            let (lines, chars, log) = st.on_multi_edited(text.as_str());
+            println!("{log}");
+            if let Some(window) = weak.upgrade() {
+                window.set_multi_line_count(lines);
+                window.set_multi_char_count(chars);
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_multi_key_pressed(move |key, has_modifier| {
+            let mut st = state.borrow_mut();
+            let log = st.on_key_pressed("TextEdit", key.as_str(), has_modifier);
+            println!("{log}");
+            if let Some(window) = weak.upgrade() {
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
+    {
+        let weak = ui.as_weak();
+        let state = Rc::clone(&state);
+        ui.on_clear_all(move || {
+            let mut st = state.borrow_mut();
+            st.clear();
+            println!("[clear] ログと一覧を初期化しました");
+            if let Some(window) = weak.upgrade() {
+                sync_ime_view(&window, &st);
+            }
+        });
+    }
+
     ui.run()?;
     Ok(())
 }
@@ -98,5 +280,56 @@ mod tests {
             ofl_text.contains("SIL OPEN FONT LICENSE Version 1.1"),
             "OFL.txt に SIL OPEN FONT LICENSE Version 1.1 が含まれていません"
         );
+    }
+
+    #[test]
+    fn ime_state_records_accepted_and_adds_non_empty_card() {
+        let mut state = ImeSpikeState::default();
+
+        // 空白のみの入力ではカード一覧に追加されないが、accepted 回数とログは記録される
+        let (empty_log, should_clear_empty) = state.on_line_accepted("   ");
+        assert!(!should_clear_empty);
+        assert_eq!(state.accepted_count, 1);
+        assert!(state.added_cards_text().is_empty());
+        assert!(empty_log.contains("[LineEdit] accepted"));
+
+        // 通常の日本語入力はカード一覧に追加され、クリアフラグが true になる
+        let (_log, should_clear) = state.on_line_accepted("  歯医者の予約  ");
+        assert!(should_clear);
+        assert_eq!(state.accepted_count, 2);
+        assert_eq!(state.added_cards_text(), "1. 歯医者の予約");
+
+        // ログ上限 12 件を超えた場合、古いログから押し出されて最新 12 件だけ残る
+        for i in 1..=15 {
+            state.on_line_edited(&format!("候補{i}"));
+        }
+        assert_eq!(state.line_edited_count, 15);
+        assert_eq!(state.logs.len(), MAX_EVENT_LOGS);
+        let log_text = state.event_log_text();
+        assert!(log_text.contains("候補15"));
+        assert!(!log_text.contains("候補1\""));
+    }
+
+    #[test]
+    fn ime_state_counts_multiline_japanese_text() {
+        let mut state = ImeSpikeState::default();
+
+        let (lines, chars, _) = state.on_multi_edited("明日の予定");
+        assert_eq!(lines, 1);
+        assert_eq!(chars, 5);
+
+        let (lines, chars, _) = state.on_multi_edited("１行目：歯医者\n２行目：買い物\n");
+        assert_eq!(lines, 3);
+        assert_eq!(chars, 16);
+
+        state.on_key_pressed("TextEdit", "Return", false);
+        assert!(!state.event_log_text().is_empty());
+
+        state.clear();
+        assert_eq!(state.seq, 0);
+        assert_eq!(state.accepted_count, 0);
+        assert_eq!(state.line_edited_count, 0);
+        assert!(state.added_cards_text().is_empty());
+        assert!(state.event_log_text().is_empty());
     }
 }

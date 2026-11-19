@@ -7,19 +7,21 @@
 
 ## いまの状態（1行）
 
-Phase 0-2 完了（macOS 目視確認済み）。次は Phase 0-3（LineEdit と TextEdit の日本語入力確認）。
+Phase 0-3a 完了（macOS 日本語 IME 実機確認済み）。次は Phase 0-4（Theme.font-base の 16 → 26 切替と行間確認）。
 
 ## 次にやること（1つだけ）
 
-ROADMAP Phase 0-3（LineEdit / TextEdit での日本語変換表示・変換確定 Enter 時の accepted 挙動・複数行入力と改行の確認）を spike/fuda-spike に実装し、macOS で実機確認する。
+ROADMAP Phase 0-4（Theme.font-base の 16/18/22/26px 切替による文字・余白追従と line-height-factor による行間指定の確認）を spike/fuda-spike に実装し、macOS で目視確認する。
 
 ## 最後にやったこと
 
-- `googlefonts/morisawa-biz-ud-gothic`（Version 1.051）から `BIZUDPGothic-Regular.ttf` / `BIZUDPGothic-Bold.ttf` と `OFL.txt`（SIL OFL 1.1）を `spike/fuda-spike/fonts/` へ取得。
-- TTF テーブル実測により、対象日本語・半角カナ・記号（`〜` U+301C / `～` U+FF5E / `・` / `※`）の全グリフ存在を確認。数字幅は `0,2〜9` が `1556/2048`、`1` のみ `1290/2048` で `tnum` 非搭載と確認。
-- `spike/fuda-spike/ui/main.slint` に Phase 0-2 確認画面（Regular/Bold、左右の時刻桁揃え比較、16/18/22/26px 見本）を実装し、`main.rs` にフォント同梱テストを追加して macOS での画面描画目視確認まで完了。
+- Phase 0-2 をコミット（`698ba81`）。
+- `spike/fuda-spike/ui/` をタブ構成へ整理し、`palette.slint`・`phase02_font.slint`・`phase03_ime.slint`（`LineEdit` / `TextEdit` の観測画面）と `ImeSpikeState`・ユニットテスト 2 件を実装。
+- macOS 実機にて `LineEdit` / `TextEdit` の変換中表示・変換確定 Enter 時の `accepted` 非発火（確定後の追加 Enter のみ発火）・複数行改行がいずれも正常に動作することを確認し、Phase 0-3 を `0-3a (macOS)` / `0-3b (Windows)` に分割。
 
 ## 決まったこと（日付つき。新しいものを上に）
+
+- 2026-11-19 Slint 1.19.0 の LineEdit / TextEdit は macOS の日本語 IME で変換中表示・変換確定 Enter 時の accepted 非発火・複数行改行とも正常動作を確認（Windows 確認は 0-3b として別途実施）。
 
 - 2026-11-19 BIZ UDPゴシック（`googlefonts/morisawa-biz-ud-gothic` Version 1.051、SIL OFL 1.1）は `default-font-family: "BIZ UDPGothic"` で Regular(400) / Bold(700) とも参照可能。数字 `1` のみ幅が狭く（`1290` vs `1556/2048`）`tnum` も非搭載（Slint 1.19 側も OpenType feature 指定なし）のため、SPEC §7.4 に従い時刻欄を固定幅にして桁を揃える。
 - 2026-11-19 `Cargo.toml` の `[workspace.dependencies]` で主要クレートを一元管理し、`slint` と `slint-build` は `=1.19.0` で完全一致させる。
@@ -51,6 +53,7 @@ ROADMAP Phase 0-3（LineEdit / TextEdit での日本語変換表示・変換確�
 ## わかっている問題
 
 - エージェントのサンドボックス内で通常の `/Users/hiro/.cargo/bin/cargo` を実行すると、`~/.cargo/bin/rustup-init` の削除試行エラー（`Operation not permitted`）や、間接依存 `convert_case 0.10.0` に同梱された `rust-toolchain.toml`（`channel = "1.83.0"`）への `rustup` 同期エラーが発生する。回避策としてツールチェーン直下（`~/.rustup/toolchains/stable-aarch64-apple-darwin/bin`）を `PATH` の先頭に置いて実行している。
+- `0-3b`（Windows 日本語入力確認）は未確認。
 - `0-1b`（Windows ビルド）は未確認。
 
 ## 測った数字

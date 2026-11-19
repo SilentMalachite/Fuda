@@ -1,0 +1,310 @@
+// Phase 0-3 確認ビュー: LineEdit と TextEdit の日本語入力（IME・変換確定 Enter・複数行改行）確認
+import { LineEdit, TextEdit, ScrollView } from "std-widgets.slint";
+import { SpikePalette } from "palette.slint";
+
+// キーボード操作とクリックの両方に対応し、3px フォーカス枠を持つアクションボタン
+component ActionButton inherits FocusScope {
+    in property <string> label;
+    callback clicked();
+
+    min-height: 44px;
+    min-width: 140px;
+    accessible-role: button;
+    accessible-label: root.label;
+    accessible-action-default => {
+        root.clicked();
+    }
+
+    key-pressed(event) => {
+        if (event.text == Key.Return || event.text == " ") {
+            root.clicked();
+            return EventResult.accept;
+        }
+        return EventResult.reject;
+    }
+
+    Rectangle {
+        width: 100%;
+        height: 100%;
+        border-radius: 8px;
+        background: touch.pressed ? SpikePalette.select : SpikePalette.surface;
+        border-width: root.has-focus ? 3px : 1px;
+        border-color: root.has-focus ? SpikePalette.focus : SpikePalette.border;
+
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 8px;
+            padding-bottom: 8px;
+
+            Text {
+                text: root.label;
+                font-size: 16px;
+                font-weight: 700;
+                color: SpikePalette.text;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        touch := TouchArea {
+            clicked => {
+                root.focus();
+                root.clicked();
+            }
+        }
+    }
+}
+
+export component Phase03ImeView inherits Rectangle {
+    in-out property <string> line-text: "";
+    in-out property <string> multi-text: "";
+    in property <int> accepted-count: 0;
+    in property <int> line-edited-count: 0;
+    in property <int> multi-line-count: 1;
+    in property <int> multi-char-count: 0;
+    in property <string> added-cards-text: "";
+    in property <string> event-log-text: "";
+
+    callback line-accepted(string);
+    callback line-edited(string);
+    callback line-key-pressed(string, bool);
+    callback multi-edited(string);
+    callback multi-key-pressed(string, bool);
+    callback clear-all();
+
+    background: SpikePalette.bg;
+
+    ScrollView {
+        width: 100%;
+        height: 100%;
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+
+            // ヘッダーと確認手順
+            VerticalLayout {
+                spacing: 4px;
+
+                Text {
+                    text: @tr("Phase 0-3: LineEdit と TextEdit の日本語入力確認");
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: SpikePalette.accent;
+                }
+
+                Text {
+                    text: @tr("1) 変換中の下線・候補が出るか  2) 変換確定の Enter で『accepted 回数』が増えないか  3) 複数行で改行・編集できるか");
+                    font-size: 14px;
+                    color: SpikePalette.text-muted;
+                    wrap: word-wrap;
+                }
+            }
+
+            // 1. LineEdit（1行入力・カード追加の想定）
+            Rectangle {
+                background: SpikePalette.surface;
+                border-width: 1px;
+                border-color: SpikePalette.border;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 10px;
+
+                    Text {
+                        text: @tr("1. LineEdit（1行入力・カード追加の想定）");
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: SpikePalette.text;
+                    }
+
+                    line_input := LineEdit {
+                        min-height: 44px;
+                        font-size: 16px;
+                        text <=> root.line-text;
+                        placeholder-text: @tr("思いついたことを書く（変換確定 Enter と追加 Enter を試す）");
+                        accepted(text) => {
+                            root.line-accepted(text);
+                        }
+                        edited(text) => {
+                            root.line-edited(text);
+                        }
+                        key-pressed(event) => {
+                            // IME の確定・変換処理を妨害しないよう常に EventResult.reject を返す
+                            if (event.text == Key.Return) {
+                                root.line-key-pressed(
+                                    "Return",
+                                    event.modifiers.shift || event.modifiers.control || event.modifiers.meta,
+                                );
+                            } else if (event.text == Key.Escape) {
+                                root.line-key-pressed(
+                                    "Escape",
+                                    event.modifiers.shift || event.modifiers.control || event.modifiers.meta,
+                                );
+                            }
+                            return EventResult.reject;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 16px;
+                        alignment: space-between;
+
+                        HorizontalLayout {
+                            spacing: 20px;
+
+                            Text {
+                                text: @tr("accepted 回数: {}", root.accepted-count);
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: SpikePalette.accent;
+                                vertical-alignment: center;
+                            }
+
+                            Text {
+                                text: @tr("edited 回数: {}", root.line-edited-count);
+                                font-size: 16px;
+                                color: SpikePalette.text-muted;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        ActionButton {
+                            label: @tr("ログと一覧を消す");
+                            clicked => {
+                                root.clear-all();
+                            }
+                        }
+                    }
+
+                    // 追加されたカード一覧表示枠
+                    Rectangle {
+                        background: SpikePalette.bg;
+                        border-width: 1px;
+                        border-color: SpikePalette.border;
+                        border-radius: 6px;
+
+                        VerticalLayout {
+                            padding: 10px;
+                            spacing: 4px;
+
+                            Text {
+                                text: @tr("accepted で追加されたカード一覧:");
+                                font-size: 14px;
+                                font-weight: 700;
+                                color: SpikePalette.text-muted;
+                            }
+
+                            Text {
+                                text: root.added-cards-text != "" ? root.added-cards-text : @tr("（まだ追加されていません）");
+                                font-size: 16px;
+                                color: root.added-cards-text != "" ? SpikePalette.text : SpikePalette.text-muted;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. TextEdit（複数行入力・本文の想定）
+            Rectangle {
+                background: SpikePalette.surface;
+                border-width: 1px;
+                border-color: SpikePalette.border;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 8px;
+
+                    HorizontalLayout {
+                        alignment: space-between;
+
+                        Text {
+                            text: @tr("2. TextEdit（複数行入力・本文の想定）");
+                            font-size: 16px;
+                            font-weight: 700;
+                            color: SpikePalette.text;
+                            vertical-alignment: center;
+                        }
+
+                        Text {
+                            text: @tr("行数: {} 行 ／ 文字数: {} 文字", root.multi-line-count, root.multi-char-count);
+                            font-size: 14px;
+                            font-weight: 700;
+                            color: SpikePalette.accent;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    TextEdit {
+                        min-height: 130px;
+                        font-size: 16px;
+                        wrap: word-wrap;
+                        text <=> root.multi-text;
+                        placeholder-text: @tr("複数行の本文を書く（日本語変換と Enter 改行を試す）");
+                        edited(text) => {
+                            root.multi-edited(text);
+                        }
+                        key-pressed(event) => {
+                            // IME と通常の改行処理を妨害しないよう常に EventResult.reject を返す
+                            if (event.text == Key.Return) {
+                                root.multi-key-pressed(
+                                    "Return",
+                                    event.modifiers.shift || event.modifiers.control || event.modifiers.meta,
+                                );
+                            } else if (event.text == Key.Escape) {
+                                root.multi-key-pressed(
+                                    "Escape",
+                                    event.modifiers.shift || event.modifiers.control || event.modifiers.meta,
+                                );
+                            }
+                            return EventResult.reject;
+                        }
+                    }
+                }
+            }
+
+            // 3. イベントログ（最新が上、最大 12 件）
+            Rectangle {
+                background: SpikePalette.surface;
+                border-width: 1px;
+                border-color: SpikePalette.border;
+                border-radius: 8px;
+
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+
+                    Text {
+                        text: @tr("3. イベントログ（最新が上・最大 12 件）");
+                        font-size: 16px;
+                        font-weight: 700;
+                        color: SpikePalette.text;
+                    }
+
+                    Rectangle {
+                        background: SpikePalette.bg;
+                        border-width: 1px;
+                        border-color: SpikePalette.border;
+                        border-radius: 6px;
+                        min-height: 96px;
+
+                        VerticalLayout {
+                            padding: 10px;
+
+                            Text {
+                                text: root.event-log-text != "" ? root.event-log-text : @tr("（キー入力や確定のイベントがここに時系列で出ます）");
+                                font-size: 14px;
+                                color: root.event-log-text != "" ? SpikePalette.text : SpikePalette.text-muted;
+                                wrap: word-wrap;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
